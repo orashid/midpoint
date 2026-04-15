@@ -14,31 +14,24 @@ export async function findCandidates(
   console.log(`[places] Found ${results.length} candidates for "${keyword}" near ${lat},${lng} r=${radius}m`);
   console.log(`[places] Names: ${results.map((r: any) => r.name).join(', ')}`);
 
-  const FOOD_TYPES = new Set([
-    'restaurant', 'cafe', 'coffee_shop', 'bakery', 'bar',
-    'meal_delivery', 'meal_takeaway', 'food',
-    'american_restaurant', 'asian_restaurant', 'barbecue_restaurant',
-    'brazilian_restaurant', 'breakfast_restaurant', 'brunch_restaurant',
-    'chinese_restaurant', 'fast_food_restaurant', 'french_restaurant',
-    'greek_restaurant', 'hamburger_restaurant', 'indian_restaurant',
-    'indonesian_restaurant', 'italian_restaurant', 'japanese_restaurant',
-    'korean_restaurant', 'lebanese_restaurant', 'mediterranean_restaurant',
-    'mexican_restaurant', 'middle_eastern_restaurant', 'pizza_restaurant',
-    'ramen_restaurant', 'seafood_restaurant', 'spanish_restaurant',
-    'steak_house', 'sushi_restaurant', 'thai_restaurant',
-    'turkish_restaurant', 'vegan_restaurant', 'vegetarian_restaurant',
-    'vietnamese_restaurant', 'ice_cream_shop', 'juice_shop',
-    'sandwich_shop', 'tea_house',
+  // Types that indicate a place is primarily NOT a restaurant
+  const NON_FOOD_PRIMARY = new Set([
+    'sports_complex', 'sports_activity_location', 'athletic_field',
+    'golf_course', 'sports_school', 'sports_coaching',
+    'shopping_mall', 'stadium', 'park', 'gym', 'school', 'library',
+    'museum', 'movie_theater', 'amusement_park', 'bowling_alley',
+    'night_club', 'casino', 'hotel', 'lodging', 'gas_station',
+    'grocery_store', 'supermarket', 'convenience_store',
   ]);
 
   let candidates = results
     .filter((r: any) => {
       const types: string[] = r.types || [];
-      const hasFood = types.some((t: string) => FOOD_TYPES.has(t));
-      if (!hasFood) {
+      const isNonFood = types.some((t: string) => NON_FOOD_PRIMARY.has(t));
+      if (isNonFood) {
         console.log(`[places] Filtered out "${r.name}" — types: ${types.join(', ')}`);
       }
-      return hasFood;
+      return !isNonFood;
     })
     .map((r: any) => ({
       placeId: r.place_id,
