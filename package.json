@@ -1,0 +1,13 @@
+{
+  "name": "midpoint-meetup",
+  "version": "1.0.0",
+  "private": true,
+  "workspaces": [
+    "packages/shared",
+    "packages/server"
+  ],
+  "scripts": {
+    "server:dev": "npm run dev -w packages/server",
+    "shared:build": "npm run build -w packages/shared"
+  }
+}
