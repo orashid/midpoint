@@ -127,18 +127,7 @@ export async function nearbySearch(
     }
   }
 
-  // Filter out non-restaurant/cafe places (sports complexes, malls, markets, etc.)
-  const validTypes = new Set(['restaurant', 'cafe', 'coffee_shop', 'bakery', 'bar', 'meal_delivery', 'meal_takeaway', 'food']);
-  const excludeTypes = new Set(['shopping_mall', 'stadium', 'sports_complex', 'park', 'gym', 'school', 'library', 'museum', 'movie_theater', 'amusement_park']);
-  const filtered = merged.filter((p) => {
-    const types: string[] = p.types || [];
-    // Exclude if it has an explicitly non-food type and no food type
-    const hasFood = types.some((t: string) => validTypes.has(t));
-    const hasExclude = types.some((t: string) => excludeTypes.has(t));
-    return hasFood || !hasExclude;
-  });
-
-  return normalizePlaces(filtered);
+  return normalizePlaces(merged);
 }
 
 function priceLevelToNumber(priceLevel?: string): number {

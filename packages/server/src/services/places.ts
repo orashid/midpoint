@@ -14,17 +14,43 @@ export async function findCandidates(
   console.log(`[places] Found ${results.length} candidates for "${keyword}" near ${lat},${lng} r=${radius}m`);
   console.log(`[places] Names: ${results.map((r: any) => r.name).join(', ')}`);
 
-  let candidates = results.map((r: any) => ({
-    placeId: r.place_id,
-    name: r.name,
-    address: r.vicinity || '',
-    lat: r.geometry.location.lat,
-    lng: r.geometry.location.lng,
-    rating: r.rating || 0,
-    priceLevel: r.price_level || 0,
-    photoUrl: r.photos?.length ? getPhotoUrl(r.photos[0].photo_reference) : null,
-    types: r.types || [],
-  }));
+  const FOOD_TYPES = new Set([
+    'restaurant', 'cafe', 'coffee_shop', 'bakery', 'bar',
+    'meal_delivery', 'meal_takeaway', 'food',
+    'american_restaurant', 'asian_restaurant', 'barbecue_restaurant',
+    'brazilian_restaurant', 'breakfast_restaurant', 'brunch_restaurant',
+    'chinese_restaurant', 'fast_food_restaurant', 'french_restaurant',
+    'greek_restaurant', 'hamburger_restaurant', 'indian_restaurant',
+    'indonesian_restaurant', 'italian_restaurant', 'japanese_restaurant',
+    'korean_restaurant', 'lebanese_restaurant', 'mediterranean_restaurant',
+    'mexican_restaurant', 'middle_eastern_restaurant', 'pizza_restaurant',
+    'ramen_restaurant', 'seafood_restaurant', 'spanish_restaurant',
+    'steak_house', 'sushi_restaurant', 'thai_restaurant',
+    'turkish_restaurant', 'vegan_restaurant', 'vegetarian_restaurant',
+    'vietnamese_restaurant', 'ice_cream_shop', 'juice_shop',
+    'sandwich_shop', 'tea_house',
+  ]);
+
+  let candidates = results
+    .filter((r: any) => {
+      const types: string[] = r.types || [];
+      const hasFood = types.some((t: string) => FOOD_TYPES.has(t));
+      if (!hasFood) {
+        console.log(`[places] Filtered out "${r.name}" — types: ${types.join(', ')}`);
+      }
+      return hasFood;
+    })
+    .map((r: any) => ({
+      placeId: r.place_id,
+      name: r.name,
+      address: r.vicinity || '',
+      lat: r.geometry.location.lat,
+      lng: r.geometry.location.lng,
+      rating: r.rating || 0,
+      priceLevel: r.price_level || 0,
+      photoUrl: r.photos?.length ? getPhotoUrl(r.photos[0].photo_reference) : null,
+      types: r.types || [],
+    }));
 
   if (cuisineExclusions?.length) {
     candidates = filterExcludedCuisines(candidates, cuisineExclusions);
