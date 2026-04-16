@@ -70,7 +70,7 @@ export function AddRestaurantModal({ visible, homeLat, homeLng, onSelect, onClos
   };
 
   return (
-    <Modal visible={visible} animationType="slide" presentationStyle="pageSheet">
+    <Modal visible={visible} animationType="slide" presentationStyle="pageSheet" onRequestClose={handleClose}>
       <SafeAreaView style={styles.container} edges={['top']}>
         <View style={styles.header}>
           <Text style={styles.title}>Add Restaurant</Text>
