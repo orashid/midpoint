@@ -4,7 +4,6 @@ import {
   Text,
   FlatList,
   TouchableOpacity,
-  ScrollView,
   StyleSheet,
   StatusBar,
   Modal,
@@ -16,7 +15,7 @@ import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { colors } from '../theme/colors';
 import { spacing, borderRadius } from '../theme/spacing';
-import { SavedRestaurant, CUISINE_TYPES } from '../storage/types';
+import { SavedRestaurant } from '../storage/types';
 import { getMyInfo } from '../storage/cache';
 import { useOurSpots } from '../hooks/useOurSpots';
 import { SpotCard } from '../components/SpotCard';
@@ -26,21 +25,6 @@ import { SpinWheel } from '../components/SpinWheel';
 import { SaveToSpotsModal } from '../components/SaveToSpotsModal';
 import { Restaurant } from '../api/client';
 import DateTimePicker from '@react-native-community/datetimepicker';
-
-const CUISINE_LABELS: Record<string, string> = {
-  all: 'All',
-  chinese: 'Chinese',
-  indian: 'Indian',
-  mexican: 'Mexican',
-  italian: 'Italian',
-  japanese: 'Japanese',
-  thai: 'Thai',
-  korean: 'Korean',
-  vietnamese: 'Vietnamese',
-  mediterranean: 'Mediterranean',
-  american: 'American',
-  other: 'Other',
-};
 
 type SortMode = 'recent' | 'visits' | 'name';
 
@@ -61,7 +45,6 @@ export function OurSpotsScreen() {
 
   const [homeLat, setHomeLat] = useState<number | undefined>();
   const [homeLng, setHomeLng] = useState<number | undefined>();
-  const [cuisineFilter, setCuisineFilter] = useState('all');
   const [sortMode, setSortMode] = useState<SortMode>('recent');
   const [suggestion, setSuggestion] = useState<SavedRestaurant | null>(null);
   const [showWheel, setShowWheel] = useState(false);
@@ -96,10 +79,7 @@ export function OurSpotsScreen() {
   }, []);
 
   const filteredSpots = useMemo(() => {
-    let list = spots;
-    if (cuisineFilter !== 'all') {
-      list = list.filter((s) => s.cuisineType === cuisineFilter);
-    }
+    const list = spots;
     switch (sortMode) {
       case 'visits':
         return [...list].sort((a, b) => b.visits.length - a.visits.length);
@@ -109,13 +89,9 @@ export function OurSpotsScreen() {
       default:
         return [...list].sort((a, b) => b.dateAdded - a.dateAdded);
     }
-  }, [spots, cuisineFilter, sortMode]);
+  }, [spots, sortMode]);
 
   // Only show cuisine chips that have spots
-  const activeCuisines = useMemo(() => {
-    const types = new Set(spots.map((s) => s.cuisineType));
-    return ['all', ...CUISINE_TYPES.filter((t) => types.has(t))];
-  }, [spots]);
 
   const handlePickForMe = useCallback(() => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
@@ -318,28 +294,11 @@ export function OurSpotsScreen() {
               )}
             </LinearGradient>
 
-            {/* Filter Bar */}
-            <View style={styles.filterBar}>
-              <ScrollView
-                horizontal
-                showsHorizontalScrollIndicator={false}
-                contentContainerStyle={styles.chipRow}
-              >
-                {activeCuisines.map((cuisine) => {
-                  const active = cuisineFilter === cuisine;
-                  return (
-                    <TouchableOpacity
-                      key={cuisine}
-                      style={[styles.chip, active && styles.chipActive]}
-                      onPress={() => setCuisineFilter(cuisine)}
-                    >
-                      <Text style={[styles.chipText, active && styles.chipTextActive]}>
-                        {CUISINE_LABELS[cuisine] || cuisine}
-                      </Text>
-                    </TouchableOpacity>
-                  );
-                })}
-              </ScrollView>
+            {/* Sort Bar */}
+            <View style={styles.sortBar}>
+              <Text style={styles.sortBarLabel}>
+                {filteredSpots.length} restaurant{filteredSpots.length !== 1 ? 's' : ''}
+              </Text>
               <TouchableOpacity style={styles.sortButton} onPress={cycleSortMode}>
                 <Ionicons
                   name={sortIcon[sortMode] as any}
@@ -351,15 +310,7 @@ export function OurSpotsScreen() {
             </View>
           </>
         }
-        ListEmptyComponent={
-          cuisineFilter !== 'all' ? (
-            <View style={styles.noResults}>
-              <Text style={styles.noResultsText}>
-                No {CUISINE_LABELS[cuisineFilter]} restaurants saved
-              </Text>
-            </View>
-          ) : null
-        }
+        ListEmptyComponent={null}
         ListFooterComponent={<View style={{ height: 100 }} />}
       />
 
@@ -546,36 +497,16 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: colors.primary,
   },
-  filterBar: {
+  sortBar: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingRight: spacing.md,
+    justifyContent: 'space-between',
+    paddingHorizontal: spacing.md,
     marginBottom: spacing.sm,
   },
-  chipRow: {
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.xs,
-    gap: spacing.xs,
-  },
-  chip: {
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.xs + 2,
-    borderRadius: borderRadius.full,
-    backgroundColor: colors.surface,
-    borderWidth: 1,
-    borderColor: colors.borderLight,
-  },
-  chipActive: {
-    backgroundColor: colors.primary,
-    borderColor: colors.primary,
-  },
-  chipText: {
+  sortBarLabel: {
     fontSize: 13,
-    fontWeight: '600',
     color: colors.textSecondary,
-  },
-  chipTextActive: {
-    color: colors.textOnPrimary,
   },
   sortButton: {
     flexDirection: 'row',
