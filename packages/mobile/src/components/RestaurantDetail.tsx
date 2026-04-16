@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -9,9 +9,11 @@ import {
   StyleSheet,
   Linking,
   Alert,
+  Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
+import DateTimePicker from '@react-native-community/datetimepicker';
 import { colors } from '../theme/colors';
 import { spacing, borderRadius } from '../theme/spacing';
 import { SavedRestaurant, CUISINE_TYPES } from '../storage/types';
@@ -39,7 +41,7 @@ interface Props {
   onClose: () => void;
   onUpdateRating: (placeId: string, rating: number) => void;
   onUpdateCuisine: (placeId: string, cuisineType: string) => void;
-  onLogVisit: (placeId: string) => void;
+  onLogVisit: (placeId: string, date?: number) => void;
   onRemoveVisit: (placeId: string, visitDate: number) => void;
   onRemove: (placeId: string) => void;
 }
@@ -64,6 +66,9 @@ export function RestaurantDetail({
   onRemoveVisit,
   onRemove,
 }: Props) {
+  const [showDatePicker, setShowDatePicker] = useState(false);
+  const [visitDate, setVisitDate] = useState(new Date());
+
   if (!restaurant) return null;
 
   const distance =
@@ -153,10 +158,58 @@ export function RestaurantDetail({
             ))}
           </View>
 
-          <TouchableOpacity style={styles.visitButton} onPress={() => onLogVisit(restaurant.placeId)}>
+          <TouchableOpacity
+            style={styles.visitButton}
+            onPress={() => {
+              setVisitDate(new Date());
+              setShowDatePicker(true);
+            }}
+          >
             <Ionicons name="checkmark-circle" size={20} color={colors.textOnPrimary} />
             <Text style={styles.visitButtonText}>We ate here</Text>
           </TouchableOpacity>
+
+          {showDatePicker && (
+            <View style={styles.datePickerCard}>
+              <Text style={styles.datePickerLabel}>When did you visit?</Text>
+              <DateTimePicker
+                value={visitDate}
+                mode="date"
+                display={Platform.OS === 'ios' ? 'inline' : 'default'}
+                maximumDate={new Date()}
+                onChange={(_, selectedDate) => {
+                  if (Platform.OS === 'android') {
+                    setShowDatePicker(false);
+                    if (selectedDate) {
+                      onLogVisit(restaurant.placeId, selectedDate.getTime());
+                    }
+                  } else if (selectedDate) {
+                    setVisitDate(selectedDate);
+                  }
+                }}
+                style={styles.datePicker}
+              />
+              {Platform.OS === 'ios' && (
+                <View style={styles.datePickerButtons}>
+                  <TouchableOpacity
+                    style={styles.datePickerCancel}
+                    onPress={() => setShowDatePicker(false)}
+                  >
+                    <Text style={styles.datePickerCancelText}>Cancel</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={styles.datePickerConfirm}
+                    onPress={() => {
+                      onLogVisit(restaurant.placeId, visitDate.getTime());
+                      setShowDatePicker(false);
+                    }}
+                  >
+                    <Text style={styles.datePickerConfirmText}>Log Visit</Text>
+                  </TouchableOpacity>
+                </View>
+              )}
+            </View>
+          )}
 
           <Text style={styles.sectionLabel}>
             Visit History ({restaurant.visits.length})
@@ -277,6 +330,49 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: colors.textOnPrimary,
     marginLeft: spacing.sm,
+  },
+  datePickerCard: {
+    backgroundColor: colors.surface,
+    borderRadius: borderRadius.lg,
+    padding: spacing.md,
+    marginTop: spacing.md,
+    borderWidth: 1,
+    borderColor: colors.borderLight,
+  },
+  datePickerLabel: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: colors.text,
+    textAlign: 'center',
+    marginBottom: spacing.sm,
+  },
+  datePicker: {
+    alignSelf: 'center',
+  },
+  datePickerButtons: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: spacing.sm,
+  },
+  datePickerCancel: {
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.lg,
+  },
+  datePickerCancelText: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: colors.textSecondary,
+  },
+  datePickerConfirm: {
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.lg,
+    backgroundColor: colors.primary,
+    borderRadius: borderRadius.md,
+  },
+  datePickerConfirmText: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: colors.textOnPrimary,
   },
   noVisits: { fontSize: 14, color: colors.textLight, fontStyle: 'italic' },
   visitItem: {

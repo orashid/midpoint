@@ -53,8 +53,8 @@ export function useOurSpots() {
   );
 
   const logVisit = useCallback(
-    async (placeId: string) => {
-      await logVisitToStorage(placeId);
+    async (placeId: string, date?: number) => {
+      await logVisitToStorage(placeId, date);
       await refresh();
     },
     [refresh]

@@ -192,11 +192,11 @@ export async function updateSpotRating(placeId: string, rating: number) {
   }
 }
 
-export async function logVisit(placeId: string) {
+export async function logVisit(placeId: string, date?: number) {
   const spots = await getOurSpots();
   const spot = spots.find((s) => s.placeId === placeId);
   if (spot) {
-    spot.visits.push({ date: Date.now() });
+    spot.visits.push({ date: date ?? Date.now() });
     await AsyncStorage.setItem(KEYS.ourSpots, JSON.stringify(spots));
   }
 }
