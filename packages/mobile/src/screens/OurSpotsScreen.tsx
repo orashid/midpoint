@@ -220,10 +220,7 @@ export function OurSpotsScreen() {
               setSelectedSpot(item);
               setShowDetail(true);
             }}
-            onLogVisit={() => {
-              setSelectedSpot(item);
-              setShowDetail(true);
-            }}
+            onLogVisit={() => handleLogVisitFromCard(item.placeId)}
           />
         )}
         contentContainerStyle={styles.listContent}
@@ -285,10 +282,7 @@ export function OurSpotsScreen() {
                   </View>
                   <TouchableOpacity
                     style={styles.ateHereBtn}
-                    onPress={() => {
-                      setSelectedSpot(suggestion);
-                      setShowDetail(true);
-                    }}
+                    onPress={() => handleLogVisitFromCard(suggestion.placeId)}
                   >
                     <Text style={styles.ateHereBtnText}>Log Visit</Text>
                   </TouchableOpacity>
