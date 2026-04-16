@@ -30,12 +30,12 @@ const HELP_SECTIONS: Array<{ heading: string; items: HelpItem[] }> = [
       {
         icon: 'add-circle',
         title: 'Add Manually',
-        body: 'Tap the + button at the bottom-right to search for a restaurant by name. Select one from the results, choose its cuisine type and give it a family rating, then save it to your list.',
+        body: 'Tap the + button at the bottom-right to search for a restaurant by name. Results are automatically biased toward your current location. Select one from the results, choose its cuisine type, then save it to your list.',
       },
       {
         icon: 'heart',
         title: 'Save from Search Results',
-        body: 'When using the Midpoint tab to find meeting spots, tap the heart icon on any restaurant result to save it to Our Spots with a cuisine type and rating.',
+        body: 'When using the Midpoint tab to find meeting spots, tap the heart icon on any restaurant result to save it to Our Spots with a cuisine type. If the restaurant is already saved, you\'ll be asked to replace or keep the existing entry.',
       },
     ],
   },
@@ -75,7 +75,7 @@ const HELP_SECTIONS: Array<{ heading: string; items: HelpItem[] }> = [
       {
         icon: 'create-outline',
         title: 'Edit Details',
-        body: 'Tap any restaurant card to open its detail page. From there you can change the cuisine type, update the family rating (1-5 stars), and view the full visit history.',
+        body: 'Tap any restaurant card to open its detail page. From there you can change the cuisine type and view the full visit history.',
       },
       {
         icon: 'swap-vertical',

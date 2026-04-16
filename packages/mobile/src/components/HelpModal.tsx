@@ -105,7 +105,7 @@ const HELP_SECTIONS: Array<{ heading: string; items: HelpItem[] }> = [
       {
         icon: 'heart',
         title: 'Saving Restaurants',
-        body: 'Build a family restaurant list two ways: tap the heart icon on any search result to save it, or go to the Our Spots tab and tap the + button to search and add restaurants manually. Each saved spot gets a cuisine type and family rating.',
+        body: 'Build a restaurant list two ways: tap the heart icon on any search result to save it, or go to the Our Spots tab and tap the + button to search and add restaurants manually. Each saved spot gets a cuisine type. If you try to add a restaurant that\'s already saved, you\'ll be asked whether to replace the existing entry or keep it.',
       },
       {
         icon: 'shuffle',
@@ -125,7 +125,7 @@ const HELP_SECTIONS: Array<{ heading: string; items: HelpItem[] }> = [
       {
         icon: 'star',
         title: 'Managing Your List',
-        body: 'Tap any restaurant card to see full details. From there you can update the family rating (1-5 stars), view visit history, open the restaurant in Google Maps, or remove it from your list. Use the cuisine filter chips and sort button to find spots quickly.',
+        body: 'Tap any restaurant card to see full details. From there you can change the cuisine type, view visit history, open the restaurant in Google Maps, or remove it from your list. Use the sort button to find spots quickly — sort by newest, most visited, or A-Z.',
       },
     ],
   },
