@@ -6,6 +6,7 @@ import {
   removeSpot as removeSpotFromStorage,
   updateSpotRating,
   logVisit as logVisitToStorage,
+  removeVisit as removeVisitFromStorage,
   updateSpotCuisine,
 } from '../storage/cache';
 import { haversineDistance } from '../utils/geo';
@@ -54,6 +55,14 @@ export function useOurSpots() {
   const logVisit = useCallback(
     async (placeId: string) => {
       await logVisitToStorage(placeId);
+      await refresh();
+    },
+    [refresh]
+  );
+
+  const removeVisit = useCallback(
+    async (placeId: string, visitDate: number) => {
+      await removeVisitFromStorage(placeId, visitDate);
       await refresh();
     },
     [refresh]
@@ -141,6 +150,7 @@ export function useOurSpots() {
     removeSpot,
     updateRating,
     logVisit,
+    removeVisit,
     updateCuisine,
     isSpotSaved,
     getSuggestion,

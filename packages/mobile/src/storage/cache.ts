@@ -201,6 +201,18 @@ export async function logVisit(placeId: string) {
   }
 }
 
+export async function removeVisit(placeId: string, visitDate: number) {
+  const spots = await getOurSpots();
+  const spot = spots.find((s) => s.placeId === placeId);
+  if (spot) {
+    const idx = spot.visits.findIndex((v) => v.date === visitDate);
+    if (idx !== -1) {
+      spot.visits.splice(idx, 1);
+      await AsyncStorage.setItem(KEYS.ourSpots, JSON.stringify(spots));
+    }
+  }
+}
+
 export async function updateSpotCuisine(placeId: string, cuisineType: string) {
   const spots = await getOurSpots();
   const spot = spots.find((s) => s.placeId === placeId);

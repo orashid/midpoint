@@ -25,6 +25,7 @@ interface Props {
   onClose: () => void;
   onUpdateRating: (placeId: string, rating: number) => void;
   onLogVisit: (placeId: string) => void;
+  onRemoveVisit: (placeId: string, visitDate: number) => void;
   onRemove: (placeId: string) => void;
 }
 
@@ -44,6 +45,7 @@ export function RestaurantDetail({
   onClose,
   onUpdateRating,
   onLogVisit,
+  onRemoveVisit,
   onRemove,
 }: Props) {
   if (!restaurant) return null;
@@ -132,6 +134,21 @@ export function RestaurantDetail({
               <View key={i} style={styles.visitItem}>
                 <Ionicons name="calendar-outline" size={14} color={colors.textSecondary} />
                 <Text style={styles.visitDate}>{formatDate(v.date)}</Text>
+                <TouchableOpacity
+                  style={styles.visitDeleteBtn}
+                  onPress={() => {
+                    Alert.alert('Remove Visit', `Remove visit on ${formatDate(v.date)}?`, [
+                      { text: 'Cancel', style: 'cancel' },
+                      {
+                        text: 'Remove',
+                        style: 'destructive',
+                        onPress: () => onRemoveVisit(restaurant.placeId, v.date),
+                      },
+                    ]);
+                  }}
+                >
+                  <Ionicons name="close-circle-outline" size={18} color={colors.textLight} />
+                </TouchableOpacity>
               </View>
             ))
           )}
@@ -216,7 +233,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: spacing.xs,
   },
-  visitDate: { fontSize: 14, color: colors.text, marginLeft: spacing.sm },
+  visitDate: { fontSize: 14, color: colors.text, marginLeft: spacing.sm, flex: 1 },
+  visitDeleteBtn: { padding: spacing.xs },
   mapsLink: {
     flexDirection: 'row',
     alignItems: 'center',

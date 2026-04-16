@@ -47,6 +47,7 @@ export function OurSpotsScreen() {
     removeSpot,
     updateRating,
     logVisit,
+    removeVisit,
     totalVisits,
     getSuggestion,
     getEligibleForWheel,
@@ -354,6 +355,7 @@ export function OurSpotsScreen() {
         }}
         onUpdateRating={updateRating}
         onLogVisit={logVisit}
+        onRemoveVisit={removeVisit}
         onRemove={removeSpot}
       />
 

@@ -72,16 +72,9 @@ export function SpotCard({ spot, homeLat, homeLng, onPress, onLogVisit }: Props)
             {CUISINE_LABELS[spot.cuisineType] || spot.cuisineType}
           </Text>
         </View>
-        <View style={styles.starsRow}>
-          {[1, 2, 3, 4, 5].map((s) => (
-            <Ionicons
-              key={s}
-              name={s <= spot.familyRating ? 'star' : 'star-outline'}
-              size={14}
-              color={s <= spot.familyRating ? colors.accent : colors.textLight}
-            />
-          ))}
-        </View>
+        {spot.visits.length > 0 && (
+          <Text style={styles.visitCount}>{spot.visits.length} visit{spot.visits.length !== 1 ? 's' : ''}</Text>
+        )}
       </View>
 
       <Text style={styles.name} numberOfLines={1}>{spot.name}</Text>
@@ -145,7 +138,7 @@ const styles = StyleSheet.create({
     paddingVertical: 2,
   },
   cuisineText: { fontSize: 11, fontWeight: '700', textTransform: 'uppercase' },
-  starsRow: { flexDirection: 'row' },
+  visitCount: { fontSize: 12, color: colors.textSecondary, fontWeight: '600' },
   name: { fontSize: 17, fontWeight: '700', color: colors.text, marginBottom: spacing.xs },
   metaRow: { flexDirection: 'row', flexWrap: 'wrap', marginBottom: spacing.sm },
   metaItem: {
