@@ -47,10 +47,14 @@ CREATE TABLE saved_people (
   lat        DOUBLE PRECISION NOT NULL,
   lng        DOUBLE PRECISION NOT NULL,
   use_count  INTEGER NOT NULL DEFAULT 1,
-  last_used  TIMESTAMPTZ DEFAULT now(),
-  UNIQUE(user_id, lower(name), address)
+  last_used  TIMESTAMPTZ DEFAULT now()
 );
 CREATE INDEX idx_saved_people_user ON saved_people(user_id);
+-- Case-insensitive uniqueness on (user_id, name, address). Postgres table
+-- UNIQUE constraints can't use expressions like lower(name), so we use a
+-- unique expression index instead.
+CREATE UNIQUE INDEX uq_saved_people_user_name_address
+  ON saved_people (user_id, lower(name), address);
 
 -- Recent searches
 CREATE TABLE recent_searches (
