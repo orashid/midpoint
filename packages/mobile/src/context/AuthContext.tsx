@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
 import * as AuthSession from 'expo-auth-session';
+import * as Google from 'expo-auth-session/providers/google';
 import * as WebBrowser from 'expo-web-browser';
 import * as AppleAuthentication from 'expo-apple-authentication';
 import * as SecureStore from 'expo-secure-store';
@@ -8,19 +9,15 @@ import { apiPost, apiGet, setAuthToken, clearAuthToken } from '../api/client';
 
 WebBrowser.maybeCompleteAuthSession();
 
-// OAuth discovery documents
-const GOOGLE_DISCOVERY = {
-  authorizationEndpoint: 'https://accounts.google.com/o/oauth2/v2/auth',
-  tokenEndpoint: 'https://oauth2.googleapis.com/token',
-};
-
 const FACEBOOK_DISCOVERY = {
   authorizationEndpoint: 'https://www.facebook.com/v18.0/dialog/oauth',
   tokenEndpoint: 'https://graph.facebook.com/v18.0/oauth/access_token',
 };
 
 // These should match your registered OAuth client IDs
-const GOOGLE_CLIENT_ID = process.env.EXPO_PUBLIC_GOOGLE_CLIENT_ID || '';
+const GOOGLE_WEB_CLIENT_ID = process.env.EXPO_PUBLIC_GOOGLE_CLIENT_ID || '';
+const GOOGLE_IOS_CLIENT_ID = process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID || '';
+const GOOGLE_ANDROID_CLIENT_ID = process.env.EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID || '';
 const FACEBOOK_APP_ID = process.env.EXPO_PUBLIC_FACEBOOK_APP_ID || '';
 
 const TOKEN_KEY = 'midpoint_auth_token';
@@ -71,6 +68,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return () => { mountedRef.current = false; };
   }, []);
 
+  // Google sign-in via expo-auth-session/providers/google — handles iOS/Android/web
+  // redirect URIs automatically based on platform.
+  const [googleRequest, , googlePromptAsync] = Google.useAuthRequest({
+    iosClientId: GOOGLE_IOS_CLIENT_ID || undefined,
+    androidClientId: GOOGLE_ANDROID_CLIENT_ID || undefined,
+    webClientId: GOOGLE_WEB_CLIENT_ID || undefined,
+    scopes: ['openid', 'profile', 'email'],
+  });
+
+  // Debug: log redirect URI so we can see what Google is being asked to redirect to
+  useEffect(() => {
+    if (googleRequest) {
+      console.log('[AUTH] Google redirectUri =', googleRequest.redirectUri);
+      console.log('[AUTH] Google clientId =', googleRequest.clientId);
+    }
+  }, [googleRequest]);
+
   // Restore session on app start
   useEffect(() => {
     (async () => {
@@ -103,7 +117,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const handleLoginResponse = useCallback(async (provider: string, providerToken: string) => {
-    const data = await apiPost('/auth/login', { provider, token: providerToken });
+    console.log('[AUTH] Sending token to server, provider:', provider, 'tokenLength:', providerToken?.length);
+    let data: any;
+    try {
+      data = await apiPost('/auth/login', { provider, token: providerToken });
+      console.log('[AUTH] Server login success. User:', data?.user?.email);
+    } catch (err: any) {
+      console.log('[AUTH] Server login FAILED. Status:', err?.response?.status, 'Message:', err?.message, 'Data:', JSON.stringify(err?.response?.data));
+      throw err;
+    }
     const midpointToken = data.token;
 
     // Store securely
@@ -127,20 +149,68 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   // ── Google Sign-In ──
   const signInWithGoogle = useCallback(async () => {
-    const request = new AuthSession.AuthRequest({
-      clientId: GOOGLE_CLIENT_ID,
-      scopes: ['openid', 'profile', 'email'],
-      redirectUri,
-      responseType: AuthSession.ResponseType.IdToken,
-    });
+    console.log('[AUTH] signInWithGoogle invoked');
+    const result = await googlePromptAsync();
+    console.log('[AUTH] promptAsync result:', JSON.stringify(result, null, 2));
+    if (result?.type === 'success') {
+      const params = result.params as any;
 
-    const result = await request.promptAsync(GOOGLE_DISCOVERY as AuthSession.DiscoveryDocument);
-    if (result.type === 'success' && result.params.id_token) {
-      await handleLoginResponse('google', result.params.id_token);
-    } else if (result.type === 'error') {
+      // Path 1: iOS implicit flow returns tokens directly
+      const directIdToken =
+        (result as any).authentication?.idToken || params.id_token;
+      const directAccessToken =
+        (result as any).authentication?.accessToken || params.access_token;
+
+      if (directIdToken) {
+        await handleLoginResponse('google', directIdToken);
+        return;
+      }
+      if (directAccessToken) {
+        await handleLoginResponse('google', directAccessToken);
+        return;
+      }
+
+      // Path 2: Android code-flow with PKCE — exchange code for tokens
+      const code = params.code;
+      if (code && googleRequest) {
+        console.log('[AUTH] Exchanging code for ID token');
+        const tokenResponse = await AuthSession.exchangeCodeAsync(
+          {
+            clientId: googleRequest.clientId,
+            code,
+            redirectUri: googleRequest.redirectUri,
+            extraParams: (googleRequest as any).codeVerifier
+              ? { code_verifier: (googleRequest as any).codeVerifier }
+              : {},
+          },
+          { tokenEndpoint: 'https://oauth2.googleapis.com/token' }
+        );
+        console.log(
+          '[AUTH] exchange response:',
+          JSON.stringify(tokenResponse, null, 2)
+        );
+
+        const exchangedIdToken = (tokenResponse as any).idToken;
+        const exchangedAccessToken = tokenResponse.accessToken;
+
+        if (exchangedIdToken) {
+          await handleLoginResponse('google', exchangedIdToken);
+          return;
+        }
+        if (exchangedAccessToken) {
+          await handleLoginResponse('google', exchangedAccessToken);
+          return;
+        }
+      }
+
+      throw new Error('Google sign-in returned no token');
+    } else if (result?.type === 'error') {
       throw new Error(result.error?.message || 'Google sign-in failed');
+    } else if (result?.type === 'cancel' || result?.type === 'dismiss') {
+      // User cancelled — silent
+      return;
     }
-  }, [handleLoginResponse, redirectUri]);
+  }, [googlePromptAsync, googleRequest, handleLoginResponse]);
 
   // ── Apple Sign-In ──
   const signInWithApple = useCallback(async () => {

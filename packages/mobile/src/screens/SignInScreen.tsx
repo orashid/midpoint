@@ -38,7 +38,7 @@ export function SignInScreen() {
             <Ionicons name="location" size={48} color={colors.primary} />
           </View>
           <Text style={styles.title}>Midpoint</Text>
-          <Text style={styles.subtitle}>Find the perfect meeting spot</Text>
+          <Text style={styles.subtitle}>Find a fair spot to meet in the middle</Text>
         </View>
 
         {/* Sign In Buttons */}

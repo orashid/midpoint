@@ -18,6 +18,7 @@ import { spacing, borderRadius } from '../theme/spacing';
 import { SavedRestaurant } from '../storage/types';
 import { getMyInfo } from '../storage/repository';
 import { useOurSpots } from '../hooks/useOurSpots';
+import { useDeviceLocation } from '../hooks/useDeviceLocation';
 import { SpotCard } from '../components/SpotCard';
 import { RestaurantDetail } from '../components/RestaurantDetail';
 import { AddRestaurantModal } from '../components/AddRestaurantModal';
@@ -46,6 +47,11 @@ export function OurSpotsScreen() {
 
   const [homeLat, setHomeLat] = useState<number | undefined>();
   const [homeLng, setHomeLng] = useState<number | undefined>();
+  const { location: deviceLocation } = useDeviceLocation();
+  // Saved "My Info" wins; otherwise fall back to device GPS so restaurant
+  // search and distance chips are still biased near the user.
+  const searchLat = homeLat ?? deviceLocation?.lat;
+  const searchLng = homeLng ?? deviceLocation?.lng;
   const [sortMode, setSortMode] = useState<SortMode>('recent');
   const [suggestion, setSuggestion] = useState<SavedRestaurant | null>(null);
   const [showWheel, setShowWheel] = useState(false);
@@ -97,18 +103,18 @@ export function OurSpotsScreen() {
 
   const handlePickForMe = useCallback(() => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    const pick = getSuggestion(homeLat, homeLng);
+    const pick = getSuggestion(searchLat, searchLng);
     setSuggestion(pick);
     setShowWheel(false);
-  }, [getSuggestion, homeLat, homeLng]);
+  }, [getSuggestion, searchLat, searchLng]);
 
   const handleSpinWheel = useCallback(() => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    const eligible = getEligibleForWheel(homeLat, homeLng);
+    const eligible = getEligibleForWheel(searchLat, searchLng);
     setWheelItems(eligible);
     setSuggestion(null);
     setShowWheel(true);
-  }, [getEligibleForWheel, homeLat, homeLng]);
+  }, [getEligibleForWheel, searchLat, searchLng]);
 
   const handleWheelResult = useCallback((restaurant: SavedRestaurant) => {
     setSuggestion(restaurant);
@@ -195,8 +201,8 @@ export function OurSpotsScreen() {
         </View>
         <AddRestaurantModal
           visible={showAddModal}
-          homeLat={homeLat}
-          homeLng={homeLng}
+          homeLat={searchLat}
+          homeLng={searchLng}
           onSelect={handleAddFromSearch}
           onClose={() => setShowAddModal(false)}
         />
@@ -221,8 +227,8 @@ export function OurSpotsScreen() {
         renderItem={({ item }) => (
           <SpotCard
             spot={item}
-            homeLat={homeLat}
-            homeLng={homeLng}
+            homeLat={searchLat}
+            homeLng={searchLng}
             onPress={() => {
               setSelectedSpot(item);
               setShowDetail(true);
@@ -333,8 +339,8 @@ export function OurSpotsScreen() {
       <RestaurantDetail
         visible={showDetail}
         restaurant={selectedSpot}
-        homeLat={homeLat}
-        homeLng={homeLng}
+        homeLat={searchLat}
+        homeLng={searchLng}
         onClose={() => {
           setShowDetail(false);
           setSelectedSpot(null);
@@ -348,8 +354,8 @@ export function OurSpotsScreen() {
 
       <AddRestaurantModal
         visible={showAddModal}
-        homeLat={homeLat}
-        homeLng={homeLng}
+        homeLat={searchLat}
+        homeLng={searchLng}
         onSelect={handleAddFromSearch}
         onClose={() => setShowAddModal(false)}
       />

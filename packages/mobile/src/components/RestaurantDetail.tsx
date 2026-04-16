@@ -129,23 +129,6 @@ export function RestaurantDetail({
             })}
           </View>
 
-          <Text style={styles.sectionLabel}>Family Rating</Text>
-          <View style={styles.starsRow}>
-            {[1, 2, 3, 4, 5].map((star) => (
-              <TouchableOpacity
-                key={star}
-                onPress={() => onUpdateRating(restaurant.placeId, star)}
-                style={styles.starBtn}
-              >
-                <Ionicons
-                  name={star <= restaurant.familyRating ? 'star' : 'star-outline'}
-                  size={32}
-                  color={star <= restaurant.familyRating ? colors.accent : colors.textLight}
-                />
-              </TouchableOpacity>
-            ))}
-          </View>
-
           <TouchableOpacity
             style={styles.visitButton}
             onPress={() => {
