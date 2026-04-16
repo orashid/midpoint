@@ -21,6 +21,8 @@ import { SpotCard } from '../components/SpotCard';
 import { RestaurantDetail } from '../components/RestaurantDetail';
 import { AddRestaurantModal } from '../components/AddRestaurantModal';
 import { SpinWheel } from '../components/SpinWheel';
+import { SaveToSpotsModal } from '../components/SaveToSpotsModal';
+import { Restaurant } from '../api/client';
 
 const CUISINE_LABELS: Record<string, string> = {
   all: 'All',
@@ -63,6 +65,7 @@ export function OurSpotsScreen() {
   const [selectedSpot, setSelectedSpot] = useState<SavedRestaurant | null>(null);
   const [showDetail, setShowDetail] = useState(false);
   const [showAddModal, setShowAddModal] = useState(false);
+  const [saveRestaurant, setSaveRestaurant] = useState<any>(null);
 
   useEffect(() => {
     getMyInfo().then((info) => {
@@ -116,7 +119,7 @@ export function OurSpotsScreen() {
   }, []);
 
   const handleAddFromSearch = useCallback(
-    async (restaurant: {
+    (restaurant: {
       placeId: string;
       name: string;
       address: string;
@@ -125,19 +128,10 @@ export function OurSpotsScreen() {
       types: string[];
       photoUrl?: string | null;
     }) => {
-      await addSpot({
-        placeId: restaurant.placeId,
-        name: restaurant.name,
-        address: restaurant.address,
-        lat: restaurant.lat,
-        lng: restaurant.lng,
-        cuisineType: 'other',
-        familyRating: 3,
-        photoUrl: restaurant.photoUrl || undefined,
-      });
       setShowAddModal(false);
+      setSaveRestaurant(restaurant);
     },
-    [addSpot]
+    []
   );
 
   const handleLogVisitFromCard = useCallback(
@@ -198,6 +192,12 @@ export function OurSpotsScreen() {
           homeLng={homeLng}
           onSelect={handleAddFromSearch}
           onClose={() => setShowAddModal(false)}
+        />
+        <SaveToSpotsModal
+          visible={!!saveRestaurant}
+          restaurant={saveRestaurant}
+          onSave={addSpot}
+          onClose={() => setSaveRestaurant(null)}
         />
       </SafeAreaView>
     );
@@ -365,6 +365,13 @@ export function OurSpotsScreen() {
         homeLng={homeLng}
         onSelect={handleAddFromSearch}
         onClose={() => setShowAddModal(false)}
+      />
+
+      <SaveToSpotsModal
+        visible={!!saveRestaurant}
+        restaurant={saveRestaurant}
+        onSave={addSpot}
+        onClose={() => setSaveRestaurant(null)}
       />
     </SafeAreaView>
   );
