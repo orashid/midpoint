@@ -1,6 +1,8 @@
 import axios from 'axios';
 import { config } from '../config';
 
+const API_TIMEOUT = 10000; // 10 seconds
+
 const PLACES_V2_URL = 'https://places.googleapis.com/v1/places';
 const ROUTES_URL = 'https://routes.googleapis.com';
 const GEOCODE_URL = 'https://maps.googleapis.com/maps/api/geocode/json';
@@ -17,6 +19,7 @@ export async function placesAutocomplete(input: string, sessiontoken?: string) {
         'Content-Type': 'application/json',
         'X-Goog-Api-Key': config.googleMapsApiKey,
       },
+      timeout: API_TIMEOUT,
     }
   );
 
@@ -37,7 +40,7 @@ export async function geocode(query: { placeId?: string; address?: string }) {
     params.address = query.address;
   }
 
-  const { data } = await axios.get(GEOCODE_URL, { params });
+  const { data } = await axios.get(GEOCODE_URL, { params, timeout: API_TIMEOUT });
   if (!data.results?.length) throw new Error('Address not found');
 
   const result = data.results[0];
@@ -89,7 +92,7 @@ export async function nearbySearch(
           },
         },
       },
-      { headers: { 'Content-Type': 'application/json', 'X-Goog-Api-Key': config.googleMapsApiKey, 'X-Goog-FieldMask': FIELD_MASK } }
+      { headers: { 'Content-Type': 'application/json', 'X-Goog-Api-Key': config.googleMapsApiKey, 'X-Goog-FieldMask': FIELD_MASK }, timeout: API_TIMEOUT }
     ).then(r => r.data.places || []).catch(() => []);
 
   const chainQueries = type === 'cafe'
@@ -109,7 +112,7 @@ export async function nearbySearch(
           },
         },
       },
-      { headers: { 'Content-Type': 'application/json', 'X-Goog-Api-Key': config.googleMapsApiKey, 'X-Goog-FieldMask': FIELD_MASK } }
+      { headers: { 'Content-Type': 'application/json', 'X-Goog-Api-Key': config.googleMapsApiKey, 'X-Goog-FieldMask': FIELD_MASK }, timeout: API_TIMEOUT }
     ).then(r => r.data.places || []).catch(() => []),
 
     textSearchFn(keyword),
@@ -167,6 +170,7 @@ export async function distanceMatrix(
           'X-Goog-Api-Key': config.googleMapsApiKey,
           'X-Goog-FieldMask': 'originIndex,destinationIndex,duration,distanceMeters,status',
         },
+        timeout: API_TIMEOUT,
       }
     );
 
@@ -210,6 +214,7 @@ export async function distanceMatrix(
           mode: 'driving',
           key: config.googleMapsApiKey,
         },
+        timeout: API_TIMEOUT,
       }
     );
     return data.rows;
@@ -255,6 +260,7 @@ export async function textSearchPlaces(
         'X-Goog-Api-Key': config.googleMapsApiKey,
         'X-Goog-FieldMask': FIELD_MASK,
       },
+      timeout: API_TIMEOUT,
     }
   );
 
@@ -262,6 +268,15 @@ export async function textSearchPlaces(
 }
 
 export function getPhotoUrl(photoReference: string, maxWidth = 400): string {
-  // New API photo references are resource names like "places/xxx/photos/yyy"
-  return `https://places.googleapis.com/v1/${photoReference}/media?maxWidthPx=${maxWidth}&key=${config.googleMapsApiKey}`;
+  // Proxy through our server to avoid exposing API key to clients
+  return `/api/photo?ref=${encodeURIComponent(photoReference)}&maxWidth=${maxWidth}`;
+}
+
+export async function fetchPhoto(photoReference: string, maxWidth = 400): Promise<{ data: Buffer; contentType: string }> {
+  const url = `https://places.googleapis.com/v1/${photoReference}/media?maxWidthPx=${maxWidth}&key=${config.googleMapsApiKey}`;
+  const response = await axios.get(url, { responseType: 'arraybuffer', timeout: 10000 });
+  return {
+    data: response.data,
+    contentType: response.headers['content-type'] || 'image/jpeg',
+  };
 }

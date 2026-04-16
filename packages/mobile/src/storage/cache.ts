@@ -1,6 +1,14 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { CachedPerson, RecentSearch, UserPreferences, MyInfo, SavedRestaurant } from './types';
 
+function safeParse<T>(raw: string, fallback: T): T {
+  try {
+    return JSON.parse(raw);
+  } catch {
+    return fallback;
+  }
+}
+
 const KEYS = {
   people: '@midpoint/people',
   searches: '@midpoint/searches',
@@ -14,7 +22,7 @@ const KEYS = {
 export async function getSavedPeople(): Promise<CachedPerson[]> {
   const raw = await AsyncStorage.getItem(KEYS.people);
   if (!raw) return [];
-  const people: CachedPerson[] = JSON.parse(raw);
+  const people: CachedPerson[] = safeParse(raw, []);
   return people.sort((a, b) => b.useCount - a.useCount);
 }
 
@@ -45,7 +53,7 @@ export async function saveAllParticipants(
 export async function getRecentSearches(): Promise<RecentSearch[]> {
   const raw = await AsyncStorage.getItem(KEYS.searches);
   if (!raw) return [];
-  const searches: RecentSearch[] = JSON.parse(raw);
+  const searches: RecentSearch[] = safeParse(raw, []);
   // Ensure every entry has a string id
   for (const s of searches) {
     if (!s.id) s.id = String(s.timestamp || Date.now());
@@ -106,7 +114,7 @@ export async function togglePinSearch(id: string) {
 export async function deleteRecentSearch(id: string) {
   const raw = await AsyncStorage.getItem(KEYS.searches);
   if (!raw) return;
-  const searches: RecentSearch[] = JSON.parse(raw);
+  const searches: RecentSearch[] = safeParse(raw, []);
   const before = searches.length;
   const filtered = searches.filter((s) => {
     // Match by id or by timestamp (id is generated from Date.now())
@@ -135,7 +143,7 @@ export async function deleteSavedPerson(name: string, address: string) {
 
 export async function getPreferences(): Promise<UserPreferences | null> {
   const raw = await AsyncStorage.getItem(KEYS.preferences);
-  return raw ? JSON.parse(raw) : null;
+  return raw ? safeParse<UserPreferences | null>(raw, null) : null;
 }
 
 export async function savePreferences(prefs: UserPreferences) {
@@ -146,7 +154,7 @@ export async function savePreferences(prefs: UserPreferences) {
 
 export async function getMyInfo(): Promise<MyInfo | null> {
   const raw = await AsyncStorage.getItem(KEYS.myInfo);
-  return raw ? JSON.parse(raw) : null;
+  return raw ? safeParse<MyInfo | null>(raw, null) : null;
 }
 
 export async function saveMyInfo(info: MyInfo) {
@@ -158,7 +166,7 @@ export async function saveMyInfo(info: MyInfo) {
 export async function getOurSpots(): Promise<SavedRestaurant[]> {
   const raw = await AsyncStorage.getItem(KEYS.ourSpots);
   if (!raw) return [];
-  const spots: SavedRestaurant[] = JSON.parse(raw);
+  const spots: SavedRestaurant[] = safeParse(raw, []);
   return spots.sort((a, b) => b.dateAdded - a.dateAdded);
 }
 

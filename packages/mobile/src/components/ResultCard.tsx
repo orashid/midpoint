@@ -3,7 +3,7 @@ import { View, Text, Image, StyleSheet, TouchableOpacity, Linking } from 'react-
 import { Ionicons } from '@expo/vector-icons';
 import { colors } from '../theme/colors';
 import { spacing, borderRadius } from '../theme/spacing';
-import { Restaurant } from '../api/client';
+import { Restaurant, resolvePhotoUrl } from '../api/client';
 
 interface Props {
   restaurant: Restaurant;
@@ -70,7 +70,7 @@ export function ResultCard({ restaurant, index, isSaved, onToggleSave }: Props) 
           </TouchableOpacity>
         )}
         {restaurant.photoUrl && (
-          <Image source={{ uri: restaurant.photoUrl }} style={styles.photo} />
+          <Image source={{ uri: resolvePhotoUrl(restaurant.photoUrl)! }} style={styles.photo} />
         )}
       </View>
 

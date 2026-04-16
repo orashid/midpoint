@@ -18,6 +18,7 @@ import { colors } from '../theme/colors';
 import { spacing, borderRadius } from '../theme/spacing';
 import { SavedRestaurant, CUISINE_TYPES } from '../storage/types';
 import { haversineDistance, formatDistance } from '../utils/geo';
+import { resolvePhotoUrl } from '../api/client';
 
 const CUISINE_LABELS: Record<string, string> = {
   chinese: 'Chinese',
@@ -110,7 +111,7 @@ export function RestaurantDetail({
 
         <ScrollView contentContainerStyle={styles.content}>
           {restaurant.photoUrl && (
-            <Image source={{ uri: restaurant.photoUrl }} style={styles.photo} />
+            <Image source={{ uri: resolvePhotoUrl(restaurant.photoUrl)! }} style={styles.photo} />
           )}
 
           <Text style={styles.name}>{restaurant.name}</Text>

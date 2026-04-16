@@ -1,6 +1,7 @@
 import axios from 'axios';
 
-const BASE_URL = 'https://midpoint-production-749a.up.railway.app/api';
+const SERVER_ORIGIN = 'https://midpoint-production-749a.up.railway.app';
+const BASE_URL = `${SERVER_ORIGIN}/api`;
 
 const api = axios.create({
   baseURL: BASE_URL,
@@ -76,6 +77,12 @@ export async function searchPlaces(
   if (lng !== undefined) params.lng = String(lng);
   const { data } = await api.get('/places-search', { params });
   return data || [];
+}
+
+export function resolvePhotoUrl(url: string | null | undefined): string | null {
+  if (!url) return null;
+  if (url.startsWith('http')) return url;
+  return `${SERVER_ORIGIN}${url}`;
 }
 
 export async function search(request: {
