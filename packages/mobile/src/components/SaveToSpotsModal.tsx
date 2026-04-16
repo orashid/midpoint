@@ -66,12 +66,10 @@ export function SaveToSpotsModal({ visible, restaurant, onSave, onClose }: Props
   );
 
   const [cuisineType, setCuisineType] = useState(detectedCuisine);
-  const [rating, setRating] = useState(3);
 
   // Reset when restaurant changes
   React.useEffect(() => {
     setCuisineType(detectedCuisine);
-    setRating(3);
   }, [detectedCuisine, restaurant]);
 
   if (!restaurant) return null;
@@ -84,7 +82,10 @@ export function SaveToSpotsModal({ visible, restaurant, onSave, onClose }: Props
       lat: restaurant.lat,
       lng: restaurant.lng,
       cuisineType,
-      familyRating: rating,
+      // familyRating is no longer collected in the UI but the data layer
+      // still expects the field; default to 3 (neutral) so existing code
+      // paths keep working.
+      familyRating: 3,
       photoUrl: restaurant.photoUrl || undefined,
     });
     onClose();
@@ -120,19 +121,6 @@ export function SaveToSpotsModal({ visible, restaurant, onSave, onClose }: Props
                 </TouchableOpacity>
               );
             })}
-          </View>
-
-          <Text style={styles.sectionLabel}>Family Rating</Text>
-          <View style={styles.starsRow}>
-            {[1, 2, 3, 4, 5].map((star) => (
-              <TouchableOpacity key={star} onPress={() => setRating(star)} style={styles.starBtn}>
-                <Ionicons
-                  name={star <= rating ? 'star' : 'star-outline'}
-                  size={36}
-                  color={star <= rating ? colors.accent : colors.textLight}
-                />
-              </TouchableOpacity>
-            ))}
           </View>
 
           <TouchableOpacity style={styles.saveButton} onPress={handleSave}>
