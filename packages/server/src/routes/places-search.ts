@@ -22,16 +22,18 @@ placesSearchRouter.get('/places-search', async (req, res, next) => {
 
     const results = await textSearchPlaces(query, lat, lng);
 
-    const mapped = results.map((r: any) => ({
-      placeId: r.place_id,
-      name: r.name,
-      address: r.vicinity || '',
-      lat: r.geometry?.location?.lat,
-      lng: r.geometry?.location?.lng,
-      rating: r.rating || 0,
-      types: r.types || [],
-      photoUrl: r.photos?.length ? getPhotoUrl(r.photos[0].photo_reference) : null,
-    }));
+    const mapped = results
+      .filter((r: any) => r.place_id && r.geometry?.location?.lat != null && r.geometry?.location?.lng != null)
+      .map((r: any) => ({
+        placeId: r.place_id,
+        name: r.name || '',
+        address: r.vicinity || '',
+        lat: r.geometry.location.lat,
+        lng: r.geometry.location.lng,
+        rating: r.rating || 0,
+        types: r.types || [],
+        photoUrl: r.photos?.length ? getPhotoUrl(r.photos[0].photo_reference) : null,
+      }));
 
     res.json(mapped);
   } catch (err) {

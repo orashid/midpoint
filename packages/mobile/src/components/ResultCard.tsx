@@ -48,7 +48,7 @@ export function ResultCard({ restaurant, index, isSaved, onToggleSave }: Props) 
             {restaurant.name}
           </Text>
           <View style={styles.ratingRow}>
-            {renderStars(restaurant.rating)}
+            {renderStars(restaurant.rating ?? 0)}
             <Text style={styles.ratingText}>{restaurant.rating?.toFixed(1)}</Text>
             <Text style={styles.priceText}>{renderPriceLevel(restaurant.priceLevel)}</Text>
           </View>

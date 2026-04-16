@@ -23,13 +23,15 @@ export async function placesAutocomplete(input: string, sessiontoken?: string) {
     }
   );
 
-  return (data.suggestions || []).map((s: any) => {
-    const place = s.placePrediction;
-    return {
-      placeId: place.placeId,
-      description: place.text?.text || place.structuredFormat?.mainText?.text || '',
-    };
-  });
+  return (data.suggestions || [])
+    .filter((s: any) => s.placePrediction?.placeId)
+    .map((s: any) => {
+      const place = s.placePrediction;
+      return {
+        placeId: place.placeId,
+        description: place.text?.text || place.structuredFormat?.mainText?.text || '',
+      };
+    });
 }
 
 export async function geocode(query: { placeId?: string; address?: string }) {
@@ -41,31 +43,36 @@ export async function geocode(query: { placeId?: string; address?: string }) {
   }
 
   const { data } = await axios.get(GEOCODE_URL, { params, timeout: API_TIMEOUT });
-  if (!data.results?.length) throw new Error('Address not found');
+  if (!data.results || data.results.length === 0) throw new Error('Address not found');
 
   const result = data.results[0];
+  if (!result.geometry?.location?.lat || !result.geometry?.location?.lng) {
+    throw new Error('Invalid geometry in geocode result');
+  }
   return {
     lat: result.geometry.location.lat,
     lng: result.geometry.location.lng,
-    formattedAddress: result.formatted_address,
+    formattedAddress: result.formatted_address || '',
   };
 }
 
 const FIELD_MASK = 'places.id,places.displayName,places.formattedAddress,places.location,places.rating,places.priceLevel,places.types,places.photos';
 
 function normalizePlaces(places: any[]) {
-  return places.map((p: any) => ({
-    place_id: p.id,
-    name: p.displayName?.text || '',
-    vicinity: p.formattedAddress || '',
-    geometry: { location: { lat: p.location?.latitude, lng: p.location?.longitude } },
-    rating: p.rating || 0,
-    price_level: priceLevelToNumber(p.priceLevel),
-    types: p.types || [],
-    photos: p.photos?.length
-      ? [{ photo_reference: p.photos[0].name }]
-      : [],
-  }));
+  return places
+    .filter((p: any) => p.id && p.location?.latitude != null && p.location?.longitude != null)
+    .map((p: any) => ({
+      place_id: p.id,
+      name: p.displayName?.text || '',
+      vicinity: p.formattedAddress || '',
+      geometry: { location: { lat: p.location.latitude, lng: p.location.longitude } },
+      rating: p.rating || 0,
+      price_level: priceLevelToNumber(p.priceLevel),
+      types: p.types || [],
+      photos: p.photos?.length
+        ? [{ photo_reference: p.photos[0].name }]
+        : [],
+    }));
 }
 
 export async function nearbySearch(
@@ -93,7 +100,10 @@ export async function nearbySearch(
         },
       },
       { headers: { 'Content-Type': 'application/json', 'X-Goog-Api-Key': config.googleMapsApiKey, 'X-Goog-FieldMask': FIELD_MASK }, timeout: API_TIMEOUT }
-    ).then(r => r.data.places || []).catch(() => []);
+    ).then(r => r.data.places || []).catch((err) => {
+      console.warn(`[google-maps] Text search failed for "${query}":`, err.message);
+      return [];
+    });
 
   const chainQueries = type === 'cafe'
     ? ['Starbucks', 'Peet\'s Coffee', 'Dutch Bros']
@@ -113,7 +123,10 @@ export async function nearbySearch(
         },
       },
       { headers: { 'Content-Type': 'application/json', 'X-Goog-Api-Key': config.googleMapsApiKey, 'X-Goog-FieldMask': FIELD_MASK }, timeout: API_TIMEOUT }
-    ).then(r => r.data.places || []).catch(() => []),
+    ).then(r => r.data.places || []).catch((err) => {
+      console.warn('[google-maps] Nearby search failed:', err.message);
+      return [];
+    }),
 
     textSearchFn(keyword),
     ...chainQueries.map(q => textSearchFn(q, 5)),
@@ -183,7 +196,10 @@ export async function distanceMatrix(
       if (entry.status?.code && entry.status.code !== 0) continue;
       const oi = entry.originIndex ?? 0;
       const di = entry.destinationIndex ?? 0;
-      const durationSec = parseInt(entry.duration?.replace('s', '') || '0', 10);
+      if (oi < 0 || oi >= rows.length || di < 0 || di >= rows[oi].elements.length) continue;
+      const durationSec = entry.duration
+        ? parseInt(String(entry.duration).replace(/[^0-9]/g, ''), 10) || 0
+        : 0;
       const distMeters = entry.distanceMeters || 0;
 
       rows[oi].elements[di] = {
@@ -201,6 +217,7 @@ export async function distanceMatrix(
 
     return rows;
   } catch (err: any) {
+    console.warn('[google-maps] Routes API failed, falling back to legacy:', err.message);
     // Fallback: try legacy Distance Matrix API
     const originsStr = origins.map((o) => `${o.lat},${o.lng}`).join('|');
     const destsStr = destinations.map((d) => `${d.lat},${d.lng}`).join('|');
@@ -217,6 +234,7 @@ export async function distanceMatrix(
         timeout: API_TIMEOUT,
       }
     );
+    if (!data.rows) throw new Error('Distance matrix service unavailable');
     return data.rows;
   }
 }

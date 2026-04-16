@@ -12,20 +12,7 @@ import * as Haptics from 'expo-haptics';
 import { colors } from '../theme/colors';
 import { spacing, borderRadius } from '../theme/spacing';
 import { SavedRestaurant } from '../storage/types';
-
-const CUISINE_COLORS: Record<string, string> = {
-  chinese: '#E74C3C',
-  indian: '#F39C12',
-  mexican: '#2ECC71',
-  italian: '#3498DB',
-  japanese: '#E91E63',
-  thai: '#9B59B6',
-  korean: '#E67E22',
-  vietnamese: '#1ABC9C',
-  mediterranean: '#2980B9',
-  american: '#34495E',
-  other: '#95A5A6',
-};
+import { CUISINE_COLORS } from '../theme/cuisine';
 
 const ITEM_HEIGHT = 56;
 const VISIBLE_ITEMS = 5;
@@ -41,6 +28,7 @@ export function SpinWheel({ restaurants, onResult, onClose }: Props) {
   const [spinning, setSpinning] = useState(false);
   const [result, setResult] = useState<SavedRestaurant | null>(null);
   const scrollY = useRef(new Animated.Value(0)).current;
+  const winnerRef = useRef<SavedRestaurant | null>(null);
 
   // Create a long repeated list for smooth spinning
   const repeats = 10;
@@ -52,6 +40,7 @@ export function SpinWheel({ restaurants, onResult, onClose }: Props) {
     setResult(null);
 
     const winnerIndex = Math.floor(Math.random() * restaurants.length);
+    winnerRef.current = restaurants[winnerIndex];
     // Land in the middle of the repeated list for smooth animation
     const targetIndex = Math.floor(repeats / 2) * restaurants.length + winnerIndex;
     const targetY = targetIndex * ITEM_HEIGHT - ITEM_HEIGHT * Math.floor(VISIBLE_ITEMS / 2);
@@ -69,7 +58,7 @@ export function SpinWheel({ restaurants, onResult, onClose }: Props) {
       },
     }).start(() => {
       setSpinning(false);
-      setResult(restaurants[winnerIndex]);
+      setResult(winnerRef.current);
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     });
   }, [spinning, restaurants, scrollY, repeats]);

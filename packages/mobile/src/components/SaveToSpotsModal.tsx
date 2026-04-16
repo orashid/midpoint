@@ -12,6 +12,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { colors } from '../theme/colors';
 import { spacing, borderRadius } from '../theme/spacing';
 import { CUISINE_TYPES } from '../storage/types';
+import { CUISINE_LABELS } from '../theme/cuisine';
 
 const CUISINE_KEYWORDS_MAP: Record<string, string[]> = {
   chinese: ['chinese'],
@@ -33,20 +34,6 @@ function detectCuisine(types: string[]): string {
   }
   return 'other';
 }
-
-const CUISINE_LABELS: Record<string, string> = {
-  chinese: 'Chinese',
-  indian: 'Indian',
-  mexican: 'Mexican',
-  italian: 'Italian',
-  japanese: 'Japanese',
-  thai: 'Thai',
-  korean: 'Korean',
-  vietnamese: 'Vietnamese',
-  mediterranean: 'Mediterranean',
-  american: 'American',
-  other: 'Other',
-};
 
 interface Props {
   visible: boolean;

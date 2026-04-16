@@ -19,20 +19,7 @@ import { spacing, borderRadius } from '../theme/spacing';
 import { SavedRestaurant, CUISINE_TYPES } from '../storage/types';
 import { haversineDistance, formatDistance } from '../utils/geo';
 import { resolvePhotoUrl } from '../api/client';
-
-const CUISINE_LABELS: Record<string, string> = {
-  chinese: 'Chinese',
-  indian: 'Indian',
-  mexican: 'Mexican',
-  italian: 'Italian',
-  japanese: 'Japanese',
-  thai: 'Thai',
-  korean: 'Korean',
-  vietnamese: 'Vietnamese',
-  mediterranean: 'Mediterranean',
-  american: 'American',
-  other: 'Other',
-};
+import { CUISINE_LABELS } from '../theme/cuisine';
 
 interface Props {
   visible: boolean;

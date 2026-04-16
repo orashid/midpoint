@@ -42,6 +42,7 @@ export async function scoreRestaurants(
     if (!valid) continue;
 
     const durations = distances.map((d) => d.durationMinutes);
+    if (durations.length === 0) continue;
     const maxDuration = Math.max(...durations);
     const minDuration = Math.min(...durations);
     const avgDuration = durations.reduce((a, b) => a + b, 0) / durations.length;

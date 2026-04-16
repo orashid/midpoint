@@ -14,6 +14,7 @@ export function haversineDistance(
 }
 
 export function computeCentroid(points: Array<{ lat: number; lng: number }>) {
+  if (points.length === 0) throw new Error('Cannot compute centroid of empty array');
   const n = points.length;
   const lat = points.reduce((sum, p) => sum + p.lat, 0) / n;
   const lng = points.reduce((sum, p) => sum + p.lng, 0) / n;

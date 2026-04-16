@@ -10,7 +10,8 @@ photoRouter.get('/photo', async (req, res, next) => {
       return res.status(400).json({ error: 'Invalid photo reference' });
     }
 
-    const maxWidth = Math.min(parseInt(req.query.maxWidth as string) || 400, 800);
+    const parsed = parseInt(req.query.maxWidth as string);
+    const maxWidth = Math.min(Math.max(isNaN(parsed) ? 400 : parsed, 100), 800);
     const { data, contentType } = await fetchPhoto(ref, maxWidth);
 
     res.set('Content-Type', contentType);

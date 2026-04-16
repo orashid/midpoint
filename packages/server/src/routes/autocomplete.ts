@@ -5,7 +5,7 @@ export const autocompleteRouter = Router();
 
 autocompleteRouter.get('/autocomplete', async (req, res, next) => {
   try {
-    const input = (req.query.input as string || '').slice(0, 200);
+    const input = String(req.query.input || '').slice(0, 200).trim();
     if (!input) {
       res.status(400).json({ error: 'input query parameter is required' });
       return;
