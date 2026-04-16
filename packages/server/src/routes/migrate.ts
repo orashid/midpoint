@@ -5,9 +5,25 @@ import { transaction } from '../db';
 export const migrateRouter = Router();
 
 // POST /api/migrate — bulk import local data on first sign-in
+const MAX_SPOTS = 500;
+const MAX_PEOPLE = 500;
+const MAX_SEARCHES = 200;
+
 migrateRouter.post('/migrate', requireAuth, async (req, res, next) => {
   try {
     const { spots, people, searches, preferences, myInfo } = req.body;
+
+    // Validate array sizes to prevent abuse
+    if (Array.isArray(spots) && spots.length > MAX_SPOTS) {
+      return res.status(400).json({ error: `Too many spots: max ${MAX_SPOTS} allowed, received ${spots.length}` });
+    }
+    if (Array.isArray(people) && people.length > MAX_PEOPLE) {
+      return res.status(400).json({ error: `Too many people: max ${MAX_PEOPLE} allowed, received ${people.length}` });
+    }
+    if (Array.isArray(searches) && searches.length > MAX_SEARCHES) {
+      return res.status(400).json({ error: `Too many recent searches: max ${MAX_SEARCHES} allowed, received ${searches.length}` });
+    }
+
     const userId = req.user!.id;
 
     await transaction(async (client) => {

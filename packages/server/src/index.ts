@@ -2,7 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import { config } from './config';
-import { apiLimiter } from './middleware/rate-limiter';
+import { apiLimiter, authLimiter } from './middleware/rate-limiter';
 import { errorHandler } from './middleware/error-handler';
 import { autocompleteRouter } from './routes/autocomplete';
 import { geocodeRouter } from './routes/geocode';
@@ -24,7 +24,7 @@ app.use(helmet());
 app.use(cors({
   origin: process.env.ALLOWED_ORIGINS
     ? process.env.ALLOWED_ORIGINS.split(',')
-    : '*',
+    : ['https://midpoint-production-749a.up.railway.app'],
 }));
 app.use(express.json({ limit: '10kb' }));
 // Larger limit for the migration endpoint (bulk data import)
@@ -42,7 +42,8 @@ app.use('/api', searchRouter);
 app.use('/api', placesSearchRouter);
 app.use('/api', photoRouter);
 
-// Auth routes
+// Auth routes (stricter rate limiting: 5 req/min per IP)
+app.use('/api/auth', authLimiter);
 app.use('/api', authRouter);
 
 // Authenticated user data routes
