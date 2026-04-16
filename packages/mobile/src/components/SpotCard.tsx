@@ -72,16 +72,16 @@ export function SpotCard({ spot, homeLat, homeLng, onPress, onLogVisit }: Props)
             {CUISINE_LABELS[spot.cuisineType] || spot.cuisineType}
           </Text>
         </View>
-        <View style={styles.starsRow}>
-          {[1, 2, 3, 4, 5].map((s) => (
-            <Ionicons
-              key={s}
-              name={s <= spot.familyRating ? 'star' : 'star-outline'}
-              size={14}
-              color={s <= spot.familyRating ? colors.accent : colors.textLight}
-            />
-          ))}
-        </View>
+        <TouchableOpacity
+          style={styles.logVisitBtn}
+          onPress={(e) => {
+            e.stopPropagation();
+            onLogVisit();
+          }}
+        >
+          <Ionicons name="add-circle-outline" size={16} color={colors.primary} />
+          <Text style={styles.logVisitBtnText}>Log Visit</Text>
+        </TouchableOpacity>
       </View>
 
       <Text style={styles.name} numberOfLines={1}>{spot.name}</Text>
@@ -106,17 +106,6 @@ export function SpotCard({ spot, homeLat, homeLng, onPress, onLogVisit }: Props)
           </View>
         )}
       </View>
-
-      <TouchableOpacity
-        style={styles.visitButton}
-        onPress={(e) => {
-          e.stopPropagation();
-          onLogVisit();
-        }}
-      >
-        <Ionicons name="checkmark-circle-outline" size={16} color={colors.primary} />
-        <Text style={styles.visitButtonText}>Log Visit</Text>
-      </TouchableOpacity>
     </TouchableOpacity>
   );
 }
@@ -145,9 +134,22 @@ const styles = StyleSheet.create({
     paddingVertical: 2,
   },
   cuisineText: { fontSize: 11, fontWeight: '700', textTransform: 'uppercase' },
-  starsRow: { flexDirection: 'row' },
+  logVisitBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs,
+    borderRadius: borderRadius.full,
+    backgroundColor: colors.primary + '12',
+  },
+  logVisitBtnText: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: colors.primary,
+    marginLeft: 3,
+  },
   name: { fontSize: 17, fontWeight: '700', color: colors.text, marginBottom: spacing.xs },
-  metaRow: { flexDirection: 'row', flexWrap: 'wrap', marginBottom: spacing.sm },
+  metaRow: { flexDirection: 'row', flexWrap: 'wrap' },
   metaItem: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -155,20 +157,4 @@ const styles = StyleSheet.create({
     marginBottom: 2,
   },
   metaText: { fontSize: 12, color: colors.textSecondary, marginLeft: 3 },
-  visitButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: spacing.xs + 2,
-    borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: colors.borderLight,
-    marginTop: spacing.xs,
-    paddingTop: spacing.sm,
-  },
-  visitButtonText: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: colors.primary,
-    marginLeft: spacing.xs,
-  },
 });

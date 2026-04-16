@@ -223,16 +223,7 @@ export function RestaurantDetail({
                 <Text style={styles.visitDate}>{formatDate(v.date)}</Text>
                 <TouchableOpacity
                   style={styles.visitDeleteBtn}
-                  onPress={() => {
-                    Alert.alert('Remove Visit', `Remove visit on ${formatDate(v.date)}?`, [
-                      { text: 'Cancel', style: 'cancel' },
-                      {
-                        text: 'Remove',
-                        style: 'destructive',
-                        onPress: () => onRemoveVisit(restaurant.placeId, v.date),
-                      },
-                    ]);
-                  }}
+                  onPress={() => onRemoveVisit(restaurant.placeId, v.date)}
                 >
                   <Ionicons name="close-circle-outline" size={18} color={colors.textLight} />
                 </TouchableOpacity>

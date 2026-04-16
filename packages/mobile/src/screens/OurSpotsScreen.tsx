@@ -42,7 +42,7 @@ const CUISINE_LABELS: Record<string, string> = {
   other: 'Other',
 };
 
-type SortMode = 'recent' | 'rating' | 'name';
+type SortMode = 'recent' | 'visits' | 'name';
 
 export function OurSpotsScreen() {
   const {
@@ -101,8 +101,8 @@ export function OurSpotsScreen() {
       list = list.filter((s) => s.cuisineType === cuisineFilter);
     }
     switch (sortMode) {
-      case 'rating':
-        return [...list].sort((a, b) => b.familyRating - a.familyRating);
+      case 'visits':
+        return [...list].sort((a, b) => b.visits.length - a.visits.length);
       case 'name':
         return [...list].sort((a, b) => a.name.localeCompare(b.name));
       case 'recent':
@@ -173,7 +173,7 @@ export function OurSpotsScreen() {
 
   const cycleSortMode = useCallback(() => {
     setSortMode((prev) => {
-      const modes: SortMode[] = ['recent', 'rating', 'name'];
+      const modes: SortMode[] = ['recent', 'visits', 'name'];
       const next = modes[(modes.indexOf(prev) + 1) % modes.length];
       return next;
     });
@@ -181,13 +181,13 @@ export function OurSpotsScreen() {
 
   const sortLabel: Record<SortMode, string> = {
     recent: 'Newest',
-    rating: 'Top Rated',
+    visits: 'Most Visited',
     name: 'A-Z',
   };
 
   const sortIcon: Record<SortMode, string> = {
     recent: 'time-outline',
-    rating: 'star-outline',
+    visits: 'checkmark-done',
     name: 'text-outline',
   };
 
