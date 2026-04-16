@@ -23,6 +23,7 @@ import { RestaurantDetail } from '../components/RestaurantDetail';
 import { AddRestaurantModal } from '../components/AddRestaurantModal';
 import { SpinWheel } from '../components/SpinWheel';
 import { SaveToSpotsModal } from '../components/SaveToSpotsModal';
+import { OurSpotsHelpModal } from '../components/OurSpotsHelpModal';
 import { Restaurant } from '../api/client';
 import DateTimePicker from '@react-native-community/datetimepicker';
 
@@ -55,6 +56,7 @@ export function OurSpotsScreen() {
   const [saveRestaurant, setSaveRestaurant] = useState<any>(null);
   const [logVisitPlaceId, setLogVisitPlaceId] = useState<string | null>(null);
   const [logVisitDate, setLogVisitDate] = useState(new Date());
+  const [showHelp, setShowHelp] = useState(false);
 
   // Keep selectedSpot in sync with spots data
   useEffect(() => {
@@ -204,6 +206,7 @@ export function OurSpotsScreen() {
           onSave={addSpot}
           onClose={() => setSaveRestaurant(null)}
         />
+        <OurSpotsHelpModal visible={showHelp} onClose={() => setShowHelp(false)} />
       </SafeAreaView>
     );
   }
@@ -233,10 +236,18 @@ export function OurSpotsScreen() {
           <>
             {/* Header */}
             <View style={styles.header}>
-              <Text style={styles.headerTitle}>Our Spots</Text>
-              <Text style={styles.headerStats}>
-                {spots.length} restaurant{spots.length !== 1 ? 's' : ''} · {totalVisits} visit{totalVisits !== 1 ? 's' : ''}
-              </Text>
+              <View>
+                <Text style={styles.headerTitle}>Our Spots</Text>
+                <Text style={styles.headerStats}>
+                  {spots.length} restaurant{spots.length !== 1 ? 's' : ''} · {totalVisits} visit{totalVisits !== 1 ? 's' : ''}
+                </Text>
+              </View>
+              <TouchableOpacity
+                style={styles.helpButton}
+                onPress={() => setShowHelp(true)}
+              >
+                <Ionicons name="help-circle-outline" size={24} color={colors.textSecondary} />
+              </TouchableOpacity>
             </View>
 
             {/* Suggestion Card */}
@@ -294,11 +305,8 @@ export function OurSpotsScreen() {
               )}
             </LinearGradient>
 
-            {/* Sort Bar */}
+            {/* Sort */}
             <View style={styles.sortBar}>
-              <Text style={styles.sortBarLabel}>
-                {filteredSpots.length} restaurant{filteredSpots.length !== 1 ? 's' : ''}
-              </Text>
               <TouchableOpacity style={styles.sortButton} onPress={cycleSortMode}>
                 <Ionicons
                   name={sortIcon[sortMode] as any}
@@ -401,6 +409,8 @@ export function OurSpotsScreen() {
           </View>
         </View>
       </Modal>
+
+      <OurSpotsHelpModal visible={showHelp} onClose={() => setShowHelp(false)} />
     </SafeAreaView>
   );
 }
@@ -411,9 +421,15 @@ const styles = StyleSheet.create({
     backgroundColor: colors.background,
   },
   header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
     paddingHorizontal: spacing.md,
     paddingTop: spacing.md,
     paddingBottom: spacing.sm,
+  },
+  helpButton: {
+    padding: spacing.xs,
   },
   headerTitle: {
     fontSize: 28,
@@ -500,13 +516,9 @@ const styles = StyleSheet.create({
   sortBar: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
+    justifyContent: 'flex-end',
     paddingHorizontal: spacing.md,
     marginBottom: spacing.sm,
-  },
-  sortBarLabel: {
-    fontSize: 13,
-    color: colors.textSecondary,
   },
   sortButton: {
     flexDirection: 'row',
