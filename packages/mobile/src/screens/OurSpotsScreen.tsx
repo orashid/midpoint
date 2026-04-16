@@ -236,12 +236,7 @@ export function OurSpotsScreen() {
           <>
             {/* Header */}
             <View style={styles.header}>
-              <View>
-                <Text style={styles.headerTitle}>Our Spots</Text>
-                <Text style={styles.headerStats}>
-                  {spots.length} restaurant{spots.length !== 1 ? 's' : ''} · {totalVisits} visit{totalVisits !== 1 ? 's' : ''}
-                </Text>
-              </View>
+              <Text style={styles.headerTitle}>Our Spots</Text>
               <TouchableOpacity
                 style={styles.helpButton}
                 onPress={() => setShowHelp(true)}
@@ -305,8 +300,11 @@ export function OurSpotsScreen() {
               )}
             </LinearGradient>
 
-            {/* Sort */}
+            {/* Stats + Sort */}
             <View style={styles.sortBar}>
+              <Text style={styles.statsText}>
+                {spots.length} restaurant{spots.length !== 1 ? 's' : ''} · {totalVisits} visit{totalVisits !== 1 ? 's' : ''}
+              </Text>
               <TouchableOpacity style={styles.sortButton} onPress={cycleSortMode}>
                 <Ionicons
                   name={sortIcon[sortMode] as any}
@@ -437,10 +435,9 @@ const styles = StyleSheet.create({
     color: colors.text,
     letterSpacing: -0.5,
   },
-  headerStats: {
-    fontSize: 14,
+  statsText: {
+    fontSize: 13,
     color: colors.textSecondary,
-    marginTop: 2,
   },
   suggestionCard: {
     marginHorizontal: spacing.md,
@@ -516,7 +513,7 @@ const styles = StyleSheet.create({
   sortBar: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'flex-end',
+    justifyContent: 'space-between',
     paddingHorizontal: spacing.md,
     marginBottom: spacing.sm,
   },
