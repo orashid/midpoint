@@ -15,7 +15,7 @@ import { spacing, borderRadius } from '../theme/spacing';
 import { useAuth } from '../context/AuthContext';
 
 export function SignInScreen() {
-  const { signInWithGoogle, signInWithApple, signInWithFacebook, signInWithMicrosoft } = useAuth();
+  const { signInWithGoogle, signInWithApple, signInWithFacebook } = useAuth();
   const [loading, setLoading] = useState<string | null>(null);
 
   const handleSignIn = async (provider: string, signInFn: () => Promise<void>) => {
@@ -90,20 +90,6 @@ export function SignInScreen() {
             )}
           </TouchableOpacity>
 
-          <TouchableOpacity
-            style={[styles.btn, styles.microsoftBtn]}
-            onPress={() => handleSignIn('microsoft', signInWithMicrosoft)}
-            disabled={loading !== null}
-          >
-            {loading === 'microsoft' ? (
-              <ActivityIndicator size="small" color="#fff" />
-            ) : (
-              <>
-                <Ionicons name="logo-microsoft" size={20} color="#fff" />
-                <Text style={styles.btnText}>Continue with Microsoft</Text>
-              </>
-            )}
-          </TouchableOpacity>
         </View>
 
         <Text style={styles.terms}>
@@ -172,9 +158,6 @@ const styles = StyleSheet.create({
   },
   facebookBtn: {
     backgroundColor: '#1877F2',
-  },
-  microsoftBtn: {
-    backgroundColor: '#2F2F2F',
   },
   terms: {
     fontSize: 12,

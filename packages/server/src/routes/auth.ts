@@ -7,7 +7,7 @@ import { requireAuth } from '../middleware/auth';
 
 export const authRouter = Router();
 
-const VALID_PROVIDERS = ['google', 'apple', 'facebook', 'microsoft'];
+const VALID_PROVIDERS = ['google', 'apple', 'facebook'];
 const TOKEN_EXPIRY = '30d';
 
 async function issueToken(userId: string, email: string): Promise<string> {

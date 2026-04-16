@@ -15,6 +15,4 @@ export const config = {
   googleClientId: process.env.GOOGLE_CLIENT_ID || '',
   appleClientId: process.env.APPLE_CLIENT_ID || '',           // e.g. "com.yourapp.midpoint"
   facebookAppId: process.env.FACEBOOK_APP_ID || '',
-  microsoftClientId: process.env.MICROSOFT_CLIENT_ID || '',
-  microsoftTenantId: process.env.MICROSOFT_TENANT_ID || 'common',
 };

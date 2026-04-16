@@ -97,37 +97,6 @@ export async function verifyFacebook(accessToken: string): Promise<ProviderProfi
   };
 }
 
-// ── Microsoft ──
-// Microsoft uses OIDC id_tokens signed with their JWKS
-const MICROSOFT_JWKS_BASE = 'https://login.microsoftonline.com';
-let microsoftJWKS: ReturnType<typeof jose.createRemoteJWKSet> | null = null;
-
-function getMicrosoftJWKS() {
-  if (!microsoftJWKS) {
-    const tenant = config.microsoftTenantId;
-    microsoftJWKS = jose.createRemoteJWKSet(
-      new URL(`${MICROSOFT_JWKS_BASE}/${tenant}/discovery/v2.0/keys`)
-    );
-  }
-  return microsoftJWKS;
-}
-
-export async function verifyMicrosoft(idToken: string): Promise<ProviderProfile> {
-  const jwks = getMicrosoftJWKS();
-  const { payload } = await jose.jwtVerify(idToken, jwks, {
-    issuer: `https://login.microsoftonline.com/${config.microsoftTenantId}/v2.0`,
-    audience: config.microsoftClientId,
-  });
-  if (!payload.sub) throw new Error('Invalid Microsoft token');
-
-  return {
-    provider: 'microsoft',
-    providerSub: payload.sub,
-    email: (payload.email as string) || (payload.preferred_username as string) || '',
-    displayName: (payload.name as string) || 'Microsoft User',
-  };
-}
-
 // ── Provider dispatch ──
 export async function verifyProviderToken(
   provider: string,
@@ -137,7 +106,6 @@ export async function verifyProviderToken(
     case 'google': return verifyGoogle(token);
     case 'apple': return verifyApple(token);
     case 'facebook': return verifyFacebook(token);
-    case 'microsoft': return verifyMicrosoft(token);
     default: throw new Error(`Unsupported provider: ${provider}`);
   }
 }

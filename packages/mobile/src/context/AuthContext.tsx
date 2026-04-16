@@ -9,14 +9,9 @@ import { apiPost, apiGet, setAuthToken, clearAuthToken } from '../api/client';
 WebBrowser.maybeCompleteAuthSession();
 
 // OAuth discovery documents
-const GOOGLE_DISCOVERY = AuthSession.useAutoDiscovery?.('https://accounts.google.com') ?? {
+const GOOGLE_DISCOVERY = {
   authorizationEndpoint: 'https://accounts.google.com/o/oauth2/v2/auth',
   tokenEndpoint: 'https://oauth2.googleapis.com/token',
-};
-
-const MICROSOFT_DISCOVERY = {
-  authorizationEndpoint: 'https://login.microsoftonline.com/common/oauth2/v2.0/authorize',
-  tokenEndpoint: 'https://login.microsoftonline.com/common/oauth2/v2.0/token',
 };
 
 const FACEBOOK_DISCOVERY = {
@@ -27,7 +22,6 @@ const FACEBOOK_DISCOVERY = {
 // These should match your registered OAuth client IDs
 const GOOGLE_CLIENT_ID = process.env.EXPO_PUBLIC_GOOGLE_CLIENT_ID || '';
 const FACEBOOK_APP_ID = process.env.EXPO_PUBLIC_FACEBOOK_APP_ID || '';
-const MICROSOFT_CLIENT_ID = process.env.EXPO_PUBLIC_MICROSOFT_CLIENT_ID || '';
 
 const TOKEN_KEY = 'midpoint_auth_token';
 const USER_KEY = 'midpoint_auth_user';
@@ -47,7 +41,6 @@ interface AuthContextType {
   signInWithGoogle: () => Promise<void>;
   signInWithApple: () => Promise<void>;
   signInWithFacebook: () => Promise<void>;
-  signInWithMicrosoft: () => Promise<void>;
   signOut: () => Promise<void>;
   token: string | null;
 }
@@ -59,7 +52,6 @@ const AuthContext = createContext<AuthContextType>({
   signInWithGoogle: async () => {},
   signInWithApple: async () => {},
   signInWithFacebook: async () => {},
-  signInWithMicrosoft: async () => {},
   signOut: async () => {},
   token: null,
 });
@@ -185,23 +177,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, [handleLoginResponse, redirectUri]);
 
-  // ── Microsoft Sign-In ──
-  const signInWithMicrosoft = useCallback(async () => {
-    const request = new AuthSession.AuthRequest({
-      clientId: MICROSOFT_CLIENT_ID,
-      scopes: ['openid', 'profile', 'email'],
-      redirectUri,
-      responseType: AuthSession.ResponseType.IdToken,
-    });
-
-    const result = await request.promptAsync(MICROSOFT_DISCOVERY as AuthSession.DiscoveryDocument);
-    if (result.type === 'success' && result.params.id_token) {
-      await handleLoginResponse('microsoft', result.params.id_token);
-    } else if (result.type === 'error') {
-      throw new Error(result.error?.message || 'Microsoft sign-in failed');
-    }
-  }, [handleLoginResponse, redirectUri]);
-
   // ── Sign Out ──
   const signOut = useCallback(async () => {
     try {
@@ -227,7 +202,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         signInWithGoogle,
         signInWithApple,
         signInWithFacebook,
-        signInWithMicrosoft,
         signOut,
         token,
       }}
