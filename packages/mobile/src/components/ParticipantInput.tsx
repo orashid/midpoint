@@ -7,6 +7,7 @@ import {
   FlatList,
   StyleSheet,
   ActivityIndicator,
+  Keyboard,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { colors } from '../theme/colors';
@@ -81,6 +82,10 @@ export function ParticipantInput({
 
   const handleSelectSuggestion = useCallback(
     async (suggestion: AutocompleteResult) => {
+      // User picked a concrete address — there's nothing left to type, so
+      // drop the keyboard so they can immediately see the rest of the form
+      // (meal type, find spot button, etc).
+      Keyboard.dismiss();
       setShowSuggestions(false);
       setSuggestions([]);
       setGeocoding(true);
@@ -122,6 +127,9 @@ export function ParticipantInput({
 
   const handleSelectPerson = useCallback(
     (person: CachedPerson) => {
+      // Same reasoning as handleSelectSuggestion: the user just picked a
+      // complete saved person (name + address), so close the keyboard.
+      Keyboard.dismiss();
       onSetFromCached(participant.id, person);
       setPeopleSuggestions([]);
     },
