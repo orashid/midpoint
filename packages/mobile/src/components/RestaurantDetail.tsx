@@ -166,7 +166,7 @@ export function RestaurantDetail({
             }}
           >
             <Ionicons name="checkmark-circle" size={20} color={colors.textOnPrimary} />
-            <Text style={styles.visitButtonText}>We ate here</Text>
+            <Text style={styles.visitButtonText}>Log Visit</Text>
           </TouchableOpacity>
 
           {showDatePicker && (

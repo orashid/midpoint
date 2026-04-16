@@ -284,7 +284,7 @@ export function OurSpotsScreen() {
                     style={styles.ateHereBtn}
                     onPress={() => handleLogVisitFromCard(suggestion.placeId)}
                   >
-                    <Text style={styles.ateHereBtnText}>We ate here</Text>
+                    <Text style={styles.ateHereBtnText}>Log Visit</Text>
                   </TouchableOpacity>
                 </View>
               )}

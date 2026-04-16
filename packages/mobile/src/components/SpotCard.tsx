@@ -115,7 +115,7 @@ export function SpotCard({ spot, homeLat, homeLng, onPress, onLogVisit }: Props)
         }}
       >
         <Ionicons name="checkmark-circle-outline" size={16} color={colors.primary} />
-        <Text style={styles.visitButtonText}>We ate here</Text>
+        <Text style={styles.visitButtonText}>Log Visit</Text>
       </TouchableOpacity>
     </TouchableOpacity>
   );

@@ -120,7 +120,7 @@ const HELP_SECTIONS: Array<{ heading: string; items: HelpItem[] }> = [
       {
         icon: 'checkmark-circle',
         title: 'Logging Visits',
-        body: 'Tap "We ate here" on any restaurant card or in the detail view to log a visit. Visit history helps the suggestion engine avoid recommending places you just went to and builds a record of your family\'s dining history.',
+        body: 'Tap "Log Visit" on any restaurant card or in the detail view to log a visit. Visit history helps the suggestion engine avoid recommending places you just went to and builds a record of your family\'s dining history.',
       },
       {
         icon: 'star',
