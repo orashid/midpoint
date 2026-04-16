@@ -39,13 +39,13 @@ const HELP_SECTIONS: Array<{ heading: string; items: HelpItem[] }> = [
       },
       {
         icon: 'filter',
-        title: 'Dietary Needs',
-        body: 'Tap "Dietary needs" to expand filters. Select dietary restrictions (vegetarian, vegan, etc.) and exclude specific cuisines you don\'t want.',
+        title: 'Filters',
+        body: 'Tap "Filters" to expand. Select dietary restrictions (vegetarian, vegan, gluten-free, halal, kosher) and exclude cuisines you don\'t want (Chinese, Indian, Mexican, Italian, Japanese, Thai, Korean, Vietnamese, Mediterranean, American, or Fast Food).',
       },
       {
         icon: 'search',
         title: 'Finding a Spot',
-        body: 'Tap "Find a Spot" to search. We calculate the midpoint between everyone, find nearby restaurants, and rank them by fairness of driving time so nobody drives way more than anyone else.',
+        body: 'Tap "Find a Spot" to search. We calculate the midpoint between everyone, find nearby restaurants, and rank them by fairness of driving time so nobody drives way more than anyone else. Non-restaurant venues (sports complexes, malls, etc.) are automatically filtered out.',
       },
     ],
   },
@@ -60,12 +60,12 @@ const HELP_SECTIONS: Array<{ heading: string; items: HelpItem[] }> = [
       {
         icon: 'list',
         title: 'Restaurant Cards',
-        body: 'Each card shows the restaurant name, rating, price level, and drive time from each participant. Results are ranked by fairness — the most equitable option appears first.',
+        body: 'Each card shows the restaurant name, rating, price level, and drive time from each participant. Results are ranked by fairness — the most equitable option appears first. Tap a card to view full restaurant details (reviews, hours, phone, photos) on Google Maps.',
       },
       {
         icon: 'create-outline',
         title: 'Modify Search',
-        body: 'After viewing results, tap "Modify Search" to scroll back to the top and adjust your inputs. Your previous search parameters are preserved so you can tweak and re-search.',
+        body: 'When viewing results, a floating "Modify Search" button appears. Tap it to scroll back to the top and adjust your inputs. Your previous search parameters are preserved so you can tweak and re-search. The button disappears once you\'re back at the top.',
       },
     ],
   },
@@ -75,7 +75,7 @@ const HELP_SECTIONS: Array<{ heading: string; items: HelpItem[] }> = [
       {
         icon: 'time',
         title: 'Recent Searches',
-        body: 'Your last searches appear as cards at the top of the screen. Tap one to instantly re-run that exact search — same people, same meal type, same filters. One tap and you\'re done. Long-press a card to delete it.',
+        body: 'Your last searches appear as cards at the top of the screen. Tap one to instantly re-run that exact search — same people, same meal type, same filters. One tap and you\'re done. If you search with the same group again, the existing entry is updated rather than creating a duplicate. Long-press a card to remove it.',
       },
       {
         icon: 'bookmark',
@@ -100,6 +100,36 @@ const HELP_SECTIONS: Array<{ heading: string; items: HelpItem[] }> = [
     ],
   },
   {
+    heading: 'Our Spots',
+    items: [
+      {
+        icon: 'heart',
+        title: 'Saving Restaurants',
+        body: 'Build a family restaurant list two ways: tap the heart icon on any search result to save it, or go to the Our Spots tab and tap the + button to search and add restaurants manually. Each saved spot gets a cuisine type and family rating.',
+      },
+      {
+        icon: 'shuffle',
+        title: 'Get a Suggestion',
+        body: 'Tap "Pick for me" on the Our Spots tab to get a smart suggestion. The algorithm favors restaurants you haven\'t visited recently and weighs higher-rated spots more. Restaurants visited in the last 14 days are excluded so you get variety.',
+      },
+      {
+        icon: 'sync',
+        title: 'Spin the Wheel',
+        body: 'Can\'t decide? Tap "Spin the wheel" for a fun, random pick from your eligible restaurants. The wheel spins with a satisfying animation and picks a winner. You need at least 2 eligible restaurants to spin.',
+      },
+      {
+        icon: 'checkmark-circle',
+        title: 'Logging Visits',
+        body: 'Tap "We ate here" on any restaurant card or in the detail view to log a visit. Visit history helps the suggestion engine avoid recommending places you just went to and builds a record of your family\'s dining history.',
+      },
+      {
+        icon: 'star',
+        title: 'Managing Your List',
+        body: 'Tap any restaurant card to see full details. From there you can update the family rating (1-5 stars), view visit history, open the restaurant in Google Maps, or remove it from your list. Use the cuisine filter chips and sort button to find spots quickly.',
+      },
+    ],
+  },
+  {
     heading: 'Tips',
     items: [
       {
@@ -111,6 +141,11 @@ const HELP_SECTIONS: Array<{ heading: string; items: HelpItem[] }> = [
         icon: 'checkmark-circle',
         title: 'Green Checkmark',
         body: 'A green checkmark next to an address means it has been successfully located on the map. If you don\'t see one, try a more specific address.',
+      },
+      {
+        icon: 'help-circle',
+        title: 'Getting Help',
+        body: 'Tap the (?) icon in the top-right corner of the home screen at any time to open this help guide.',
       },
     ],
   },

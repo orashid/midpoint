@@ -7,9 +7,11 @@ import { spacing } from '../theme/spacing';
 
 interface Props {
   restaurants: Restaurant[];
+  savedPlaceIds?: Set<string>;
+  onToggleSave?: (restaurant: Restaurant) => void;
 }
 
-export function ResultsList({ restaurants }: Props) {
+export function ResultsList({ restaurants, savedPlaceIds, onToggleSave }: Props) {
   return (
     <View style={styles.container}>
       <Text style={styles.title}>
@@ -19,7 +21,13 @@ export function ResultsList({ restaurants }: Props) {
         Ranked by fairness of drive time + rating
       </Text>
       {restaurants.map((r, i) => (
-        <ResultCard key={r.placeId} restaurant={r} index={i} />
+        <ResultCard
+          key={r.placeId}
+          restaurant={r}
+          index={i}
+          isSaved={savedPlaceIds?.has(r.placeId)}
+          onToggleSave={onToggleSave}
+        />
       ))}
     </View>
   );

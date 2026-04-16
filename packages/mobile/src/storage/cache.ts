@@ -1,11 +1,12 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { CachedPerson, RecentSearch, UserPreferences, MyInfo } from './types';
+import { CachedPerson, RecentSearch, UserPreferences, MyInfo, SavedRestaurant } from './types';
 
 const KEYS = {
   people: '@midpoint/people',
   searches: '@midpoint/searches',
   preferences: '@midpoint/preferences',
   myInfo: '@midpoint/myInfo',
+  ourSpots: '@midpoint/ourSpots',
 };
 
 // ── Favorite People ──
@@ -150,4 +151,61 @@ export async function getMyInfo(): Promise<MyInfo | null> {
 
 export async function saveMyInfo(info: MyInfo) {
   await AsyncStorage.setItem(KEYS.myInfo, JSON.stringify(info));
+}
+
+// ── Our Spots ──
+
+export async function getOurSpots(): Promise<SavedRestaurant[]> {
+  const raw = await AsyncStorage.getItem(KEYS.ourSpots);
+  if (!raw) return [];
+  const spots: SavedRestaurant[] = JSON.parse(raw);
+  return spots.sort((a, b) => b.dateAdded - a.dateAdded);
+}
+
+export async function saveSpot(
+  spot: Omit<SavedRestaurant, 'visits' | 'dateAdded'>
+) {
+  const spots = await getOurSpots();
+  const existing = spots.find((s) => s.placeId === spot.placeId);
+  if (existing) {
+    existing.familyRating = spot.familyRating;
+    existing.cuisineType = spot.cuisineType;
+    if (spot.photoUrl) existing.photoUrl = spot.photoUrl;
+  } else {
+    spots.push({ ...spot, visits: [], dateAdded: Date.now() });
+  }
+  await AsyncStorage.setItem(KEYS.ourSpots, JSON.stringify(spots));
+}
+
+export async function removeSpot(placeId: string) {
+  const spots = await getOurSpots();
+  const filtered = spots.filter((s) => s.placeId !== placeId);
+  await AsyncStorage.setItem(KEYS.ourSpots, JSON.stringify(filtered));
+}
+
+export async function updateSpotRating(placeId: string, rating: number) {
+  const spots = await getOurSpots();
+  const spot = spots.find((s) => s.placeId === placeId);
+  if (spot) {
+    spot.familyRating = rating;
+    await AsyncStorage.setItem(KEYS.ourSpots, JSON.stringify(spots));
+  }
+}
+
+export async function logVisit(placeId: string) {
+  const spots = await getOurSpots();
+  const spot = spots.find((s) => s.placeId === placeId);
+  if (spot) {
+    spot.visits.push({ date: Date.now() });
+    await AsyncStorage.setItem(KEYS.ourSpots, JSON.stringify(spots));
+  }
+}
+
+export async function updateSpotCuisine(placeId: string, cuisineType: string) {
+  const spots = await getOurSpots();
+  const spot = spots.find((s) => s.placeId === placeId);
+  if (spot) {
+    spot.cuisineType = cuisineType;
+    await AsyncStorage.setItem(KEYS.ourSpots, JSON.stringify(spots));
+  }
 }

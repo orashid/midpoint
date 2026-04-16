@@ -7,6 +7,7 @@ import { errorHandler } from './middleware/error-handler';
 import { autocompleteRouter } from './routes/autocomplete';
 import { geocodeRouter } from './routes/geocode';
 import { searchRouter } from './routes/search';
+import { placesSearchRouter } from './routes/places-search';
 
 const app = express();
 
@@ -23,6 +24,7 @@ app.get('/api/health', (_req, res) => {
 app.use('/api', autocompleteRouter);
 app.use('/api', geocodeRouter);
 app.use('/api', searchRouter);
+app.use('/api', placesSearchRouter);
 
 app.use(errorHandler);
 

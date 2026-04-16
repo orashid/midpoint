@@ -229,6 +229,38 @@ function formatDistance(meters: number): string {
   return miles < 0.1 ? `${Math.round(meters)} m` : `${miles.toFixed(1)} mi`;
 }
 
+export async function textSearchPlaces(
+  query: string,
+  lat?: number,
+  lng?: number,
+  radius = 30000
+) {
+  const body: any = {
+    textQuery: query,
+    maxResultCount: 10,
+    includedType: 'restaurant',
+  };
+  if (lat !== undefined && lng !== undefined) {
+    body.locationBias = {
+      circle: { center: { latitude: lat, longitude: lng }, radius },
+    };
+  }
+
+  const { data } = await axios.post(
+    `${PLACES_V2_URL}:searchText`,
+    body,
+    {
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Goog-Api-Key': config.googleMapsApiKey,
+        'X-Goog-FieldMask': FIELD_MASK,
+      },
+    }
+  );
+
+  return normalizePlaces(data.places || []);
+}
+
 export function getPhotoUrl(photoReference: string, maxWidth = 400): string {
   // New API photo references are resource names like "places/xxx/photos/yyy"
   return `https://places.googleapis.com/v1/${photoReference}/media?maxWidthPx=${maxWidth}&key=${config.googleMapsApiKey}`;

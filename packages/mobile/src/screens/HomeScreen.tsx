@@ -28,11 +28,14 @@ import { ResultsList } from '../components/ResultsList';
 import { MapView } from '../components/MapView';
 import { LoadingOverlay } from '../components/LoadingOverlay';
 import { HelpModal } from '../components/HelpModal';
+import { SaveToSpotsModal } from '../components/SaveToSpotsModal';
 
 import { useParticipants } from '../hooks/useParticipants';
 import { useSearch } from '../hooks/useSearch';
 import { useRecentSearches } from '../hooks/useRecentSearches';
 import { useFavoritePeople } from '../hooks/useFavoritePeople';
+import { useOurSpots } from '../hooks/useOurSpots';
+import { Restaurant } from '../api/client';
 
 export function HomeScreen() {
   const {
@@ -51,6 +54,13 @@ export function HomeScreen() {
   const [scrolledPastResults, setScrolledPastResults] = useState(false);
   const { searches, addSearch, togglePin, removeSearch } = useRecentSearches();
   const { people, saveParticipants, removePerson } = useFavoritePeople();
+
+  const { spots, addSpot, isSpotSaved } = useOurSpots();
+  const savedPlaceIds = React.useMemo(
+    () => new Set(spots.map((s) => s.placeId)),
+    [spots]
+  );
+  const [saveRestaurant, setSaveRestaurant] = useState<Restaurant | null>(null);
 
   const [mealType, setMealType] = useState<MealType>('lunch');
   const [dietaryRestrictions, setDietaryRestrictions] = useState<string[]>([]);
@@ -177,7 +187,7 @@ export function HomeScreen() {
       <StatusBar barStyle="dark-content" backgroundColor={colors.background} />
       {loading && <LoadingOverlay />}
 
-      <SafeAreaView style={styles.safeArea} edges={['top', 'bottom']}>
+      <SafeAreaView style={styles.safeArea} edges={['top']}>
         <ScrollView
           ref={scrollRef}
           style={styles.scroll}
@@ -272,7 +282,14 @@ export function HomeScreen() {
                 restaurants={results.restaurants}
                 participants={participants}
               />
-              <ResultsList restaurants={results.restaurants} />
+              <ResultsList
+                restaurants={results.restaurants}
+                savedPlaceIds={savedPlaceIds}
+                onToggleSave={(r) => {
+                  if (isSpotSaved(r.placeId)) return;
+                  setSaveRestaurant(r);
+                }}
+              />
 
               {/* New Search button at bottom of results */}
               <TouchableOpacity
@@ -306,6 +323,12 @@ export function HomeScreen() {
         )}
       </SafeAreaView>
       <HelpModal visible={showHelp} onClose={() => setShowHelp(false)} />
+      <SaveToSpotsModal
+        visible={!!saveRestaurant}
+        restaurant={saveRestaurant}
+        onSave={addSpot}
+        onClose={() => setSaveRestaurant(null)}
+      />
     </View>
   );
 }

@@ -8,6 +8,8 @@ import { Restaurant } from '../api/client';
 interface Props {
   restaurant: Restaurant;
   index: number;
+  isSaved?: boolean;
+  onToggleSave?: (restaurant: Restaurant) => void;
 }
 
 function renderStars(rating: number) {
@@ -27,7 +29,7 @@ function renderPriceLevel(level: number) {
   return '$'.repeat(level || 1);
 }
 
-export function ResultCard({ restaurant, index }: Props) {
+export function ResultCard({ restaurant, index, isSaved, onToggleSave }: Props) {
   const openDetails = () => {
     // Opens Google Maps place page with full details (reviews, hours, phone, menu, etc.)
     const query = encodeURIComponent(restaurant.name);
@@ -51,6 +53,22 @@ export function ResultCard({ restaurant, index }: Props) {
             <Text style={styles.priceText}>{renderPriceLevel(restaurant.priceLevel)}</Text>
           </View>
         </View>
+        {onToggleSave && (
+          <TouchableOpacity
+            onPress={(e) => {
+              e.stopPropagation();
+              onToggleSave(restaurant);
+            }}
+            style={styles.heartBtn}
+            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+          >
+            <Ionicons
+              name={isSaved ? 'heart' : 'heart-outline'}
+              size={22}
+              color={isSaved ? colors.error : colors.textLight}
+            />
+          </TouchableOpacity>
+        )}
         {restaurant.photoUrl && (
           <Image source={{ uri: restaurant.photoUrl }} style={styles.photo} />
         )}
@@ -111,11 +129,15 @@ const styles = StyleSheet.create({
   ratingRow: { flexDirection: 'row', alignItems: 'center', marginTop: 2 },
   ratingText: { fontSize: 13, color: colors.textSecondary, marginLeft: 4 },
   priceText: { fontSize: 13, color: colors.textLight, marginLeft: spacing.sm },
+  heartBtn: {
+    padding: spacing.xs,
+    marginLeft: spacing.xs,
+  },
   photo: {
     width: 56,
     height: 56,
     borderRadius: borderRadius.sm,
-    marginLeft: spacing.sm,
+    marginLeft: spacing.xs,
   },
   address: {
     fontSize: 13,

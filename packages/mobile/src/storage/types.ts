@@ -31,3 +31,21 @@ export interface MyInfo {
   lat: number;
   lng: number;
 }
+
+export interface SavedRestaurant {
+  placeId: string;
+  name: string;
+  address: string;
+  lat: number;
+  lng: number;
+  cuisineType: string;
+  familyRating: number;
+  visits: Array<{ date: number }>;
+  dateAdded: number;
+  photoUrl?: string;
+}
+
+export const CUISINE_TYPES = [
+  'chinese', 'indian', 'mexican', 'italian', 'japanese',
+  'thai', 'korean', 'vietnamese', 'mediterranean', 'american', 'other',
+] as const;

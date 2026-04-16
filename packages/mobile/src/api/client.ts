@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const BASE_URL = 'https://happy-generosity-production-749a.up.railway.app/api';
+const BASE_URL = 'https://midpoint-production-749a.up.railway.app/api';
 
 const api = axios.create({
   baseURL: BASE_URL,
@@ -53,6 +53,29 @@ export async function autocomplete(input: string, sessiontoken?: string): Promis
 export async function geocode(query: { placeId?: string; address?: string }): Promise<GeocodeResult> {
   const { data } = await api.post('/geocode', query);
   return data;
+}
+
+export interface PlaceSearchResult {
+  placeId: string;
+  name: string;
+  address: string;
+  lat: number;
+  lng: number;
+  rating: number;
+  types: string[];
+  photoUrl: string | null;
+}
+
+export async function searchPlaces(
+  query: string,
+  lat?: number,
+  lng?: number
+): Promise<PlaceSearchResult[]> {
+  const params: Record<string, string> = { query };
+  if (lat !== undefined) params.lat = String(lat);
+  if (lng !== undefined) params.lng = String(lng);
+  const { data } = await api.get('/places-search', { params });
+  return data || [];
 }
 
 export async function search(request: {
