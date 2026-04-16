@@ -8,6 +8,7 @@ import {
   StatusBar,
   Modal,
   Platform,
+  Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -43,6 +44,7 @@ export function OurSpotsScreen() {
     totalVisits,
     getSuggestion,
     getEligibleForWheel,
+    isSpotSaved,
   } = useOurSpots();
 
   const [homeLat, setHomeLat] = useState<number | undefined>();
@@ -132,9 +134,29 @@ export function OurSpotsScreen() {
       photoUrl?: string | null;
     }) => {
       setShowAddModal(false);
+
+      if (isSpotSaved(restaurant.placeId)) {
+        Alert.alert(
+          'Already Saved',
+          `${restaurant.name} is already in Our Spots.`,
+          [
+            { text: 'Cancel', style: 'cancel' },
+            {
+              text: 'Replace',
+              style: 'destructive',
+              onPress: async () => {
+                await removeSpot(restaurant.placeId);
+                setSaveRestaurant(restaurant);
+              },
+            },
+          ]
+        );
+        return;
+      }
+
       setSaveRestaurant(restaurant);
     },
-    []
+    [isSpotSaved, removeSpot]
   );
 
   const handleLogVisitFromCard = useCallback(
