@@ -35,11 +35,13 @@ export function AddRestaurantModal({ visible, homeLat, homeLng, onSelect, onClos
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<PlaceSearchResult[]>([]);
   const [searching, setSearching] = useState(false);
+  const [searchError, setSearchError] = useState<string | null>(null);
   const debounceRef = useRef<ReturnType<typeof setTimeout>>(undefined);
 
   const handleSearch = useCallback(
     (text: string) => {
       setQuery(text);
+      setSearchError(null);
       if (debounceRef.current) clearTimeout(debounceRef.current);
       if (text.length < 2) {
         setResults([]);
@@ -50,8 +52,9 @@ export function AddRestaurantModal({ visible, homeLat, homeLng, onSelect, onClos
         try {
           const data = await searchPlaces(text, homeLat, homeLng);
           setResults(data);
-        } catch {
+        } catch (e: any) {
           setResults([]);
+          setSearchError(e.message || 'Search failed');
         }
         setSearching(false);
       }, 300);
@@ -62,6 +65,7 @@ export function AddRestaurantModal({ visible, homeLat, homeLng, onSelect, onClos
   const handleClose = () => {
     setQuery('');
     setResults([]);
+    setSearchError(null);
     onClose();
   };
 
@@ -118,7 +122,9 @@ export function AddRestaurantModal({ visible, homeLat, homeLng, onSelect, onClos
           ListEmptyComponent={
             query.length >= 2 && !searching ? (
               <View style={styles.empty}>
-                <Text style={styles.emptyText}>No restaurants found</Text>
+                <Text style={styles.emptyText}>
+                  {searchError ? `Error: ${searchError}` : 'No restaurants found'}
+                </Text>
               </View>
             ) : null
           }
