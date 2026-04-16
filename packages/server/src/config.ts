@@ -8,4 +8,13 @@ dotenv.config(); // also try CWD
 export const config = {
   port: parseInt(process.env.PORT || '3001', 10),
   googleMapsApiKey: process.env.GOOGLE_MAPS_API_KEY || '',
+  databaseUrl: process.env.DATABASE_URL || '',
+  jwtSecret: process.env.JWT_SECRET || '',
+
+  // OAuth Client IDs (for token validation)
+  googleClientId: process.env.GOOGLE_CLIENT_ID || '',
+  appleClientId: process.env.APPLE_CLIENT_ID || '',           // e.g. "com.yourapp.midpoint"
+  facebookAppId: process.env.FACEBOOK_APP_ID || '',
+  microsoftClientId: process.env.MICROSOFT_CLIENT_ID || '',
+  microsoftTenantId: process.env.MICROSOFT_TENANT_ID || 'common',
 };
