@@ -1,0 +1,186 @@
+import React, { useState } from 'react';
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  StyleSheet,
+  Platform,
+  ActivityIndicator,
+  Alert,
+} from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { Ionicons } from '@expo/vector-icons';
+import { colors } from '../theme/colors';
+import { spacing, borderRadius } from '../theme/spacing';
+import { useAuth } from '../context/AuthContext';
+
+export function SignInScreen() {
+  const { signInWithGoogle, signInWithApple, signInWithFacebook, signInWithMicrosoft } = useAuth();
+  const [loading, setLoading] = useState<string | null>(null);
+
+  const handleSignIn = async (provider: string, signInFn: () => Promise<void>) => {
+    setLoading(provider);
+    try {
+      await signInFn();
+    } catch (err: any) {
+      Alert.alert('Sign In Failed', err.message || 'Please try again.');
+    } finally {
+      setLoading(null);
+    }
+  };
+
+  return (
+    <SafeAreaView style={styles.container}>
+      <View style={styles.content}>
+        {/* Logo / Branding */}
+        <View style={styles.branding}>
+          <View style={styles.iconCircle}>
+            <Ionicons name="location" size={48} color={colors.primary} />
+          </View>
+          <Text style={styles.title}>Midpoint</Text>
+          <Text style={styles.subtitle}>Find the perfect meeting spot</Text>
+        </View>
+
+        {/* Sign In Buttons */}
+        <View style={styles.buttons}>
+          <TouchableOpacity
+            style={[styles.btn, styles.googleBtn]}
+            onPress={() => handleSignIn('google', signInWithGoogle)}
+            disabled={loading !== null}
+          >
+            {loading === 'google' ? (
+              <ActivityIndicator size="small" color="#fff" />
+            ) : (
+              <>
+                <Ionicons name="logo-google" size={20} color="#fff" />
+                <Text style={styles.btnText}>Continue with Google</Text>
+              </>
+            )}
+          </TouchableOpacity>
+
+          {Platform.OS === 'ios' && (
+            <TouchableOpacity
+              style={[styles.btn, styles.appleBtn]}
+              onPress={() => handleSignIn('apple', signInWithApple)}
+              disabled={loading !== null}
+            >
+              {loading === 'apple' ? (
+                <ActivityIndicator size="small" color="#fff" />
+              ) : (
+                <>
+                  <Ionicons name="logo-apple" size={20} color="#fff" />
+                  <Text style={styles.btnText}>Continue with Apple</Text>
+                </>
+              )}
+            </TouchableOpacity>
+          )}
+
+          <TouchableOpacity
+            style={[styles.btn, styles.facebookBtn]}
+            onPress={() => handleSignIn('facebook', signInWithFacebook)}
+            disabled={loading !== null}
+          >
+            {loading === 'facebook' ? (
+              <ActivityIndicator size="small" color="#fff" />
+            ) : (
+              <>
+                <Ionicons name="logo-facebook" size={20} color="#fff" />
+                <Text style={styles.btnText}>Continue with Facebook</Text>
+              </>
+            )}
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[styles.btn, styles.microsoftBtn]}
+            onPress={() => handleSignIn('microsoft', signInWithMicrosoft)}
+            disabled={loading !== null}
+          >
+            {loading === 'microsoft' ? (
+              <ActivityIndicator size="small" color="#fff" />
+            ) : (
+              <>
+                <Ionicons name="logo-microsoft" size={20} color="#fff" />
+                <Text style={styles.btnText}>Continue with Microsoft</Text>
+              </>
+            )}
+          </TouchableOpacity>
+        </View>
+
+        <Text style={styles.terms}>
+          By continuing, you agree to our Terms of Service and Privacy Policy
+        </Text>
+      </View>
+    </SafeAreaView>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: colors.background,
+  },
+  content: {
+    flex: 1,
+    justifyContent: 'center',
+    paddingHorizontal: spacing.xl,
+  },
+  branding: {
+    alignItems: 'center',
+    marginBottom: 48,
+  },
+  iconCircle: {
+    width: 96,
+    height: 96,
+    borderRadius: 48,
+    backgroundColor: colors.primary + '15',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: spacing.lg,
+  },
+  title: {
+    fontSize: 36,
+    fontWeight: '800',
+    color: colors.text,
+    letterSpacing: -1,
+  },
+  subtitle: {
+    fontSize: 16,
+    color: colors.textSecondary,
+    marginTop: spacing.xs,
+  },
+  buttons: {
+    gap: 12,
+  },
+  btn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 14,
+    borderRadius: borderRadius.lg,
+    gap: 10,
+  },
+  btnText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#fff',
+  },
+  googleBtn: {
+    backgroundColor: '#4285F4',
+  },
+  appleBtn: {
+    backgroundColor: '#000',
+  },
+  facebookBtn: {
+    backgroundColor: '#1877F2',
+  },
+  microsoftBtn: {
+    backgroundColor: '#2F2F2F',
+  },
+  terms: {
+    fontSize: 12,
+    color: colors.textLight,
+    textAlign: 'center',
+    marginTop: 24,
+    lineHeight: 18,
+  },
+});

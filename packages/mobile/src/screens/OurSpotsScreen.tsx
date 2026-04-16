@@ -16,7 +16,7 @@ import * as Haptics from 'expo-haptics';
 import { colors } from '../theme/colors';
 import { spacing, borderRadius } from '../theme/spacing';
 import { SavedRestaurant } from '../storage/types';
-import { getMyInfo } from '../storage/cache';
+import { getMyInfo } from '../storage/repository';
 import { useOurSpots } from '../hooks/useOurSpots';
 import { SpotCard } from '../components/SpotCard';
 import { RestaurantDetail } from '../components/RestaurantDetail';

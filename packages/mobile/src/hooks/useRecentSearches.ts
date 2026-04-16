@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { RecentSearch } from '../storage/types';
-import { getRecentSearches, saveRecentSearch, togglePinSearch, deleteRecentSearch } from '../storage/cache';
+import { getRecentSearches, saveRecentSearch, togglePinSearch, deleteRecentSearch } from '../storage/repository';
 
 export function useRecentSearches() {
   const [searches, setSearches] = useState<RecentSearch[]>([]);

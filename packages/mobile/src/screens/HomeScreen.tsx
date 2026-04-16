@@ -16,7 +16,7 @@ import * as Haptics from 'expo-haptics';
 import { colors } from '../theme/colors';
 import { spacing, borderRadius } from '../theme/spacing';
 import { MealType } from '../storage/types';
-import { getPreferences, savePreferences, getMyInfo, saveMyInfo } from '../storage/cache';
+import { getPreferences, savePreferences, getMyInfo, saveMyInfo } from '../storage/repository';
 import { geocode } from '../api/client';
 
 import { ParticipantList } from '../components/ParticipantList';

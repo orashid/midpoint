@@ -8,7 +8,7 @@ import {
   logVisit as logVisitToStorage,
   removeVisit as removeVisitFromStorage,
   updateSpotCuisine,
-} from '../storage/cache';
+} from '../storage/repository';
 import { haversineDistance } from '../utils/geo';
 
 const MAX_DISTANCE_KM = 30;

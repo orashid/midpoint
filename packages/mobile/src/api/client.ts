@@ -8,6 +8,63 @@ const api = axios.create({
   timeout: 20000,
 });
 
+// ── Auth token management ──
+
+let authToken: string | null = null;
+
+export function setAuthToken(token: string) {
+  authToken = token;
+}
+
+export function clearAuthToken() {
+  authToken = null;
+}
+
+export function getAuthToken(): string | null {
+  return authToken;
+}
+
+export function isAuthenticated(): boolean {
+  return authToken !== null;
+}
+
+// Request interceptor: attach auth token
+api.interceptors.request.use((config) => {
+  if (authToken) {
+    config.headers.Authorization = `Bearer ${authToken}`;
+  }
+  return config;
+});
+
+// ── Generic helpers for authenticated calls ──
+
+export async function apiGet(path: string, params?: Record<string, string>): Promise<any> {
+  const { data } = await api.get(path, { params });
+  return data;
+}
+
+export async function apiPost(path: string, body: any): Promise<any> {
+  const { data } = await api.post(path, body);
+  return data;
+}
+
+export async function apiPut(path: string, body: any): Promise<any> {
+  const { data } = await api.put(path, body);
+  return data;
+}
+
+export async function apiPatch(path: string, body: any): Promise<any> {
+  const { data } = await api.patch(path, body);
+  return data;
+}
+
+export async function apiDelete(path: string, body?: any): Promise<any> {
+  const { data } = await api.delete(path, body ? { data: body } : undefined);
+  return data;
+}
+
+// ── Types ──
+
 export interface AutocompleteResult {
   placeId: string;
   description: string;
@@ -43,6 +100,8 @@ export interface SearchResponse {
   midpoint: { lat: number; lng: number };
   restaurants: Restaurant[];
 }
+
+// ── Public API functions (no auth required) ──
 
 export async function autocomplete(input: string, sessiontoken?: string): Promise<AutocompleteResult[]> {
   const params: Record<string, string> = { input };

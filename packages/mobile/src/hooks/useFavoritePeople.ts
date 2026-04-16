@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { CachedPerson } from '../storage/types';
-import { getSavedPeople, saveAllParticipants, deleteSavedPerson } from '../storage/cache';
+import { getSavedPeople, saveAllParticipants, deleteSavedPerson } from '../storage/repository';
 
 export function useFavoritePeople() {
   const [people, setPeople] = useState<CachedPerson[]>([]);
