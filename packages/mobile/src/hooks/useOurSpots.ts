@@ -132,13 +132,20 @@ export function useOurSpots() {
 
   const getEligibleForWheel = useCallback(
     (homeLat?: number, homeLng?: number): SavedRestaurant[] => {
-      const eligible = getEligible(homeLat, homeLng);
+      // Wheel includes ALL spots (no recency filter) — just distance filter
+      let eligible = spots;
+      if (homeLat !== undefined && homeLng !== undefined) {
+        eligible = spots.filter((s) => {
+          const dist = haversineDistance(homeLat, homeLng, s.lat, s.lng);
+          return dist <= MAX_DISTANCE_KM;
+        });
+      }
       // Max 12 for wheel, randomly sample if more
       if (eligible.length <= 12) return eligible;
       const shuffled = [...eligible].sort(() => Math.random() - 0.5);
       return shuffled.slice(0, 12);
     },
-    [getEligible]
+    [spots]
   );
 
   const totalVisits = spots.reduce((sum, s) => sum + s.visits.length, 0);
