@@ -8,11 +8,14 @@ const ROUTES_URL = 'https://routes.googleapis.com';
 const GEOCODE_URL = 'https://maps.googleapis.com/maps/api/geocode/json';
 
 export async function placesAutocomplete(input: string, sessiontoken?: string) {
+  // Don't restrict includedPrimaryTypes — we want street addresses, routes,
+  // POIs, localities, and postal codes all to surface as predictions. The
+  // previous restriction to just locality/sublocality/postal_code meant
+  // partial street addresses (e.g. "123 Main") never matched anything.
   const { data } = await axios.post(
     `${PLACES_V2_URL}:autocomplete`,
     {
       input,
-      includedPrimaryTypes: ['locality', 'sublocality', 'postal_code'],
     },
     {
       headers: {
