@@ -1,7 +1,7 @@
 import { OAuth2Client } from 'google-auth-library';
 import * as jose from 'jose';
 import axios from 'axios';
-import { config } from '../config';
+import { config, googleClientIds } from '../config';
 
 export interface ProviderProfile {
   provider: string;
@@ -12,12 +12,16 @@ export interface ProviderProfile {
 }
 
 // ── Google ──
-const googleClient = new OAuth2Client(config.googleClientId);
+// Accept tokens from any of our registered client IDs (web / iOS / Android).
+const googleClient = new OAuth2Client();
 
 export async function verifyGoogle(idToken: string): Promise<ProviderProfile> {
+  if (googleClientIds.length === 0) {
+    throw new Error('No Google client IDs configured on server');
+  }
   const ticket = await googleClient.verifyIdToken({
     idToken,
-    audience: config.googleClientId,
+    audience: googleClientIds,
   });
   const payload = ticket.getPayload();
   if (!payload || !payload.sub) throw new Error('Invalid Google token');

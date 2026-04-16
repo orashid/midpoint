@@ -12,7 +12,18 @@ export const config = {
   jwtSecret: process.env.JWT_SECRET || '',
 
   // OAuth Client IDs (for token validation)
+  // Google supports multiple client IDs (web + iOS + android). Any tokens issued
+  // for client IDs in googleClientIds will be accepted.
   googleClientId: process.env.GOOGLE_CLIENT_ID || '',
+  googleIosClientId: process.env.GOOGLE_IOS_CLIENT_ID || '',
+  googleAndroidClientId: process.env.GOOGLE_ANDROID_CLIENT_ID || '',
   appleClientId: process.env.APPLE_CLIENT_ID || '',           // e.g. "com.yourapp.midpoint"
   facebookAppId: process.env.FACEBOOK_APP_ID || '',
 };
+
+// All acceptable Google audiences (web, iOS, Android) — filtered for non-empty.
+export const googleClientIds: string[] = [
+  config.googleClientId,
+  config.googleIosClientId,
+  config.googleAndroidClientId,
+].filter((id): id is string => !!id);
