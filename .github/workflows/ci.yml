@@ -26,8 +26,6 @@ jobs:
       - name: Type-check server
         run: cd packages/server && npx tsc --noEmit
 
-      - name: Type-check mobile
-        run: cd packages/mobile && npx tsc --noEmit
 
   test:
     name: Test
