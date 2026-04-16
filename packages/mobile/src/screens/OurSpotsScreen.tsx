@@ -7,6 +7,8 @@ import {
   ScrollView,
   StyleSheet,
   StatusBar,
+  Modal,
+  Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -23,6 +25,7 @@ import { AddRestaurantModal } from '../components/AddRestaurantModal';
 import { SpinWheel } from '../components/SpinWheel';
 import { SaveToSpotsModal } from '../components/SaveToSpotsModal';
 import { Restaurant } from '../api/client';
+import DateTimePicker from '@react-native-community/datetimepicker';
 
 const CUISINE_LABELS: Record<string, string> = {
   all: 'All',
@@ -67,6 +70,21 @@ export function OurSpotsScreen() {
   const [showDetail, setShowDetail] = useState(false);
   const [showAddModal, setShowAddModal] = useState(false);
   const [saveRestaurant, setSaveRestaurant] = useState<any>(null);
+  const [logVisitPlaceId, setLogVisitPlaceId] = useState<string | null>(null);
+  const [logVisitDate, setLogVisitDate] = useState(new Date());
+
+  // Keep selectedSpot in sync with spots data
+  useEffect(() => {
+    if (selectedSpot) {
+      const updated = spots.find((s) => s.placeId === selectedSpot.placeId);
+      if (updated) {
+        setSelectedSpot(updated);
+      } else {
+        setSelectedSpot(null);
+        setShowDetail(false);
+      }
+    }
+  }, [spots]);
 
   useEffect(() => {
     getMyInfo().then((info) => {
@@ -136,11 +154,21 @@ export function OurSpotsScreen() {
   );
 
   const handleLogVisitFromCard = useCallback(
-    async (placeId: string) => {
-      await logVisit(placeId);
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    (placeId: string) => {
+      setLogVisitDate(new Date());
+      setLogVisitPlaceId(placeId);
     },
-    [logVisit]
+    []
+  );
+
+  const confirmLogVisit = useCallback(
+    async (date: Date) => {
+      if (!logVisitPlaceId) return;
+      await logVisit(logVisitPlaceId, date.getTime());
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      setLogVisitPlaceId(null);
+    },
+    [logVisitPlaceId, logVisit]
   );
 
   const cycleSortMode = useCallback(() => {
@@ -375,6 +403,53 @@ export function OurSpotsScreen() {
         onSave={addSpot}
         onClose={() => setSaveRestaurant(null)}
       />
+
+      {/* Date Picker Modal for Log Visit */}
+      <Modal
+        visible={!!logVisitPlaceId}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setLogVisitPlaceId(null)}
+      >
+        <View style={styles.dateModalOverlay}>
+          <View style={styles.dateModalCard}>
+            <Text style={styles.dateModalTitle}>When did you visit?</Text>
+            <DateTimePicker
+              value={logVisitDate}
+              mode="date"
+              display={Platform.OS === 'ios' ? 'inline' : 'default'}
+              maximumDate={new Date()}
+              onChange={(_, selectedDate) => {
+                if (Platform.OS === 'android') {
+                  if (selectedDate) {
+                    confirmLogVisit(selectedDate);
+                  } else {
+                    setLogVisitPlaceId(null);
+                  }
+                } else if (selectedDate) {
+                  setLogVisitDate(selectedDate);
+                }
+              }}
+            />
+            {Platform.OS === 'ios' && (
+              <View style={styles.dateModalButtons}>
+                <TouchableOpacity
+                  style={styles.dateModalCancel}
+                  onPress={() => setLogVisitPlaceId(null)}
+                >
+                  <Text style={styles.dateModalCancelText}>Cancel</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={styles.dateModalConfirm}
+                  onPress={() => confirmLogVisit(logVisitDate)}
+                >
+                  <Text style={styles.dateModalConfirmText}>Log Visit</Text>
+                </TouchableOpacity>
+              </View>
+            )}
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -580,6 +655,52 @@ const styles = StyleSheet.create({
   },
   emptyAddText: {
     fontSize: 16,
+    fontWeight: '700',
+    color: colors.textOnPrimary,
+  },
+  dateModalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: spacing.lg,
+  },
+  dateModalCard: {
+    backgroundColor: colors.surface,
+    borderRadius: borderRadius.lg,
+    padding: spacing.lg,
+    width: '100%',
+    maxWidth: 360,
+  },
+  dateModalTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: colors.text,
+    textAlign: 'center',
+    marginBottom: spacing.md,
+  },
+  dateModalButtons: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: spacing.md,
+  },
+  dateModalCancel: {
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.lg,
+  },
+  dateModalCancelText: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: colors.textSecondary,
+  },
+  dateModalConfirm: {
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.lg,
+    backgroundColor: colors.primary,
+    borderRadius: borderRadius.md,
+  },
+  dateModalConfirmText: {
+    fontSize: 15,
     fontWeight: '700',
     color: colors.textOnPrimary,
   },
