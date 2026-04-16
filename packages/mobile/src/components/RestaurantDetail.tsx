@@ -14,8 +14,22 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { colors } from '../theme/colors';
 import { spacing, borderRadius } from '../theme/spacing';
-import { SavedRestaurant } from '../storage/types';
+import { SavedRestaurant, CUISINE_TYPES } from '../storage/types';
 import { haversineDistance, formatDistance } from '../utils/geo';
+
+const CUISINE_LABELS: Record<string, string> = {
+  chinese: 'Chinese',
+  indian: 'Indian',
+  mexican: 'Mexican',
+  italian: 'Italian',
+  japanese: 'Japanese',
+  thai: 'Thai',
+  korean: 'Korean',
+  vietnamese: 'Vietnamese',
+  mediterranean: 'Mediterranean',
+  american: 'American',
+  other: 'Other',
+};
 
 interface Props {
   visible: boolean;
@@ -24,6 +38,7 @@ interface Props {
   homeLng?: number;
   onClose: () => void;
   onUpdateRating: (placeId: string, rating: number) => void;
+  onUpdateCuisine: (placeId: string, cuisineType: string) => void;
   onLogVisit: (placeId: string) => void;
   onRemoveVisit: (placeId: string, visitDate: number) => void;
   onRemove: (placeId: string) => void;
@@ -44,6 +59,7 @@ export function RestaurantDetail({
   homeLng,
   onClose,
   onUpdateRating,
+  onUpdateCuisine,
   onLogVisit,
   onRemoveVisit,
   onRemove,
@@ -101,6 +117,24 @@ export function RestaurantDetail({
               <Text style={styles.distanceText}>{formatDistance(distance)} from home</Text>
             </View>
           )}
+
+          <Text style={styles.sectionLabel}>Cuisine Type</Text>
+          <View style={styles.cuisineChipRow}>
+            {CUISINE_TYPES.map((type) => {
+              const isSelected = restaurant.cuisineType === type;
+              return (
+                <TouchableOpacity
+                  key={type}
+                  style={[styles.cuisineChip, isSelected && styles.cuisineChipSelected]}
+                  onPress={() => onUpdateCuisine(restaurant.placeId, type)}
+                >
+                  <Text style={[styles.cuisineChipText, isSelected && styles.cuisineChipTextSelected]}>
+                    {CUISINE_LABELS[type] || type}
+                  </Text>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
 
           <Text style={styles.sectionLabel}>Family Rating</Text>
           <View style={styles.starsRow}>
@@ -206,6 +240,23 @@ const styles = StyleSheet.create({
     marginBottom: spacing.sm,
     marginTop: spacing.lg,
   },
+  cuisineChipRow: { flexDirection: 'row', flexWrap: 'wrap' },
+  cuisineChip: {
+    borderRadius: borderRadius.full,
+    borderWidth: 1,
+    borderColor: colors.border,
+    paddingHorizontal: spacing.sm + 2,
+    paddingVertical: spacing.xs + 1,
+    marginRight: spacing.xs,
+    marginBottom: spacing.xs,
+    backgroundColor: colors.surface,
+  },
+  cuisineChipSelected: {
+    backgroundColor: colors.primary,
+    borderColor: colors.primary,
+  },
+  cuisineChipText: { fontSize: 13, color: colors.textSecondary },
+  cuisineChipTextSelected: { color: colors.textOnPrimary, fontWeight: '600' },
   starsRow: {
     flexDirection: 'row',
     justifyContent: 'center',

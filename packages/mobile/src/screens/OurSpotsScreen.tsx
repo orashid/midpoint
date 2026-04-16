@@ -48,6 +48,7 @@ export function OurSpotsScreen() {
     addSpot,
     removeSpot,
     updateRating,
+    updateCuisine,
     logVisit,
     removeVisit,
     totalVisits,
@@ -354,6 +355,7 @@ export function OurSpotsScreen() {
           setSelectedSpot(null);
         }}
         onUpdateRating={updateRating}
+        onUpdateCuisine={updateCuisine}
         onLogVisit={logVisit}
         onRemoveVisit={removeVisit}
         onRemove={removeSpot}
