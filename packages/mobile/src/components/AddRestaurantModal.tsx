@@ -95,6 +95,10 @@ export function AddRestaurantModal({ visible, homeLat, homeLng, onSelect, onClos
         <FlatList
           data={results}
           keyExtractor={(item) => item.placeId}
+          // Without this, the first tap on a result just dismisses the
+          // keyboard (because the search TextInput is focused) and only
+          // the second tap actually selects the restaurant.
+          keyboardShouldPersistTaps="handled"
           renderItem={({ item }) => (
             <TouchableOpacity
               style={styles.resultItem}
