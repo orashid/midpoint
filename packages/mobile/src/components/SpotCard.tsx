@@ -34,9 +34,14 @@ const CUISINE_LABELS: Record<string, string> = {
   other: 'Other',
 };
 
-function formatLastVisit(timestamp: number): string {
-  const date = new Date(timestamp);
-  return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+function timeAgo(timestamp: number): string {
+  const diff = Date.now() - timestamp;
+  const days = Math.floor(diff / (24 * 60 * 60 * 1000));
+  if (days === 0) return 'Today';
+  if (days === 1) return '1 day ago';
+  if (days < 30) return `${days} days ago`;
+  if (days < 365) return `${Math.floor(days / 30)}mo ago`;
+  return `${Math.floor(days / 365)}y ago`;
 }
 
 interface Props {
@@ -84,7 +89,7 @@ export function SpotCard({ spot, homeLat, homeLng, onPress, onLogVisit }: Props)
         <View style={styles.metaItem}>
           <Ionicons name="time-outline" size={14} color={colors.textSecondary} />
           <Text style={styles.metaText}>
-            {lastVisit ? formatLastVisit(lastVisit) : 'Never visited'}
+            {lastVisit ? timeAgo(lastVisit) : 'Never visited'}
           </Text>
         </View>
         {spot.visits.length > 0 && (
