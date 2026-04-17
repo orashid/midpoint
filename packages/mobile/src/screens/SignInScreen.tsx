@@ -19,10 +19,12 @@ export function SignInScreen() {
   const [loading, setLoading] = useState<string | null>(null);
 
   const handleSignIn = async (provider: string, signInFn: () => Promise<void>) => {
+    console.log('[SIGNIN] handleSignIn called for provider:', provider);
     setLoading(provider);
     try {
       await signInFn();
     } catch (err: any) {
+      console.log('[SIGNIN] Error for provider:', provider, err.message);
       Alert.alert('Sign In Failed', err.message || 'Please try again.');
     } finally {
       setLoading(null);

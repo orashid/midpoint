@@ -101,6 +101,22 @@ authRouter.get('/auth/me', requireAuth, async (req, res, next) => {
   }
 });
 
+// GET /api/auth/facebook/callback — redirects Facebook OAuth back to the mobile app
+authRouter.get('/auth/facebook/callback', (req, res) => {
+  // Facebook sends the access_token in the URL fragment (#access_token=...),
+  // which the browser never sends to the server. So we serve a small HTML page
+  // that reads the fragment and redirects to the app's custom scheme.
+  res.send(`<!DOCTYPE html>
+<html><head><title>Redirecting...</title></head>
+<body>
+<script>
+  const fragment = window.location.hash.substring(1);
+  window.location.href = 'midpoint://facebook-auth?' + fragment;
+</script>
+<p>Redirecting to Midpoint...</p>
+</body></html>`);
+});
+
 // POST /api/auth/logout (client-side token deletion; server no-op for stateless JWT)
 authRouter.post('/auth/logout', requireAuth, (_req, res) => {
   res.json({ success: true });

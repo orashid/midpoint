@@ -232,20 +232,46 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   // ── Facebook Sign-In ──
   const signInWithFacebook = useCallback(async () => {
-    const request = new AuthSession.AuthRequest({
-      clientId: FACEBOOK_APP_ID,
-      scopes: ['public_profile', 'email'],
-      redirectUri,
-      responseType: AuthSession.ResponseType.Token,
-    });
+    console.log('[AUTH] signInWithFacebook invoked');
+    // Facebook requires HTTPS redirect — use our server as intermediary,
+    // which then redirects to midpoint:// custom scheme
+    const fbRedirectUri = 'https://midpoint-production-749a.up.railway.app/api/auth/facebook/callback';
+    console.log('[AUTH] Facebook App ID:', FACEBOOK_APP_ID);
+    console.log('[AUTH] Facebook redirectUri:', fbRedirectUri);
 
-    const result = await request.promptAsync(FACEBOOK_DISCOVERY as AuthSession.DiscoveryDocument);
-    if (result.type === 'success' && result.params.access_token) {
-      await handleLoginResponse('facebook', result.params.access_token);
-    } else if (result.type === 'error') {
-      throw new Error(result.error?.message || 'Facebook sign-in failed');
+    const state = Math.random().toString(36).substring(7);
+    const authUrl =
+      `https://www.facebook.com/v18.0/dialog/oauth` +
+      `?client_id=${FACEBOOK_APP_ID}` +
+      `&redirect_uri=${encodeURIComponent(fbRedirectUri)}` +
+      `&response_type=token` +
+      `&scope=public_profile,email` +
+      `&state=${state}`;
+
+    console.log('[AUTH] Facebook authUrl:', authUrl);
+    // Listen for midpoint://facebook-auth?access_token=... redirect
+    const result = await WebBrowser.openAuthSessionAsync(authUrl, 'midpoint://facebook-auth');
+    console.log('[AUTH] Facebook result:', JSON.stringify(result, null, 2));
+
+    if (result.type === 'success' && result.url) {
+      // Parse the access_token from the URL query params
+      const url = result.url;
+      const queryString = url.split('?')[1];
+      if (queryString) {
+        const params = new URLSearchParams(queryString);
+        const accessToken = params.get('access_token');
+        if (accessToken) {
+          await handleLoginResponse('facebook', accessToken);
+          return;
+        }
+      }
+      throw new Error('Facebook sign-in returned no access token');
+    } else if (result.type === 'cancel' || result.type === 'dismiss') {
+      console.log('[AUTH] Facebook sign-in dismissed or cancelled');
+    } else {
+      throw new Error('Facebook sign-in failed');
     }
-  }, [handleLoginResponse, redirectUri]);
+  }, [handleLoginResponse]);
 
   // ── Sign Out ──
   const signOut = useCallback(async () => {
