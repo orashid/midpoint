@@ -4,22 +4,15 @@ import * as Google from 'expo-auth-session/providers/google';
 import * as WebBrowser from 'expo-web-browser';
 import * as AppleAuthentication from 'expo-apple-authentication';
 import * as SecureStore from 'expo-secure-store';
-import { Platform, Linking } from 'react-native';
+import { Platform } from 'react-native';
 import { apiPost, apiGet, setAuthToken, clearAuthToken } from '../api/client';
 
-// Note: maybeCompleteAuthSession is called inside AuthProvider after Google
-// auth completes, not at module level, to avoid interfering with Facebook auth.
-
-const FACEBOOK_DISCOVERY = {
-  authorizationEndpoint: 'https://www.facebook.com/v18.0/dialog/oauth',
-  tokenEndpoint: 'https://graph.facebook.com/v18.0/oauth/access_token',
-};
+WebBrowser.maybeCompleteAuthSession();
 
 // These should match your registered OAuth client IDs
 const GOOGLE_WEB_CLIENT_ID = process.env.EXPO_PUBLIC_GOOGLE_CLIENT_ID || '';
 const GOOGLE_IOS_CLIENT_ID = process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID || '';
 const GOOGLE_ANDROID_CLIENT_ID = process.env.EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID || '';
-const FACEBOOK_APP_ID = process.env.EXPO_PUBLIC_FACEBOOK_APP_ID || '';
 
 const TOKEN_KEY = 'midpoint_auth_token';
 const USER_KEY = 'midpoint_auth_user';
@@ -38,7 +31,6 @@ interface AuthContextType {
   isAuthenticated: boolean;
   signInWithGoogle: () => Promise<void>;
   signInWithApple: () => Promise<void>;
-  signInWithFacebook: () => Promise<void>;
   signOut: () => Promise<void>;
   token: string | null;
 }
@@ -49,7 +41,6 @@ const AuthContext = createContext<AuthContextType>({
   isAuthenticated: false,
   signInWithGoogle: async () => {},
   signInWithApple: async () => {},
-  signInWithFacebook: async () => {},
   signOut: async () => {},
   token: null,
 });
@@ -225,51 +216,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, [handleLoginResponse]);
 
-  // ── Facebook Sign-In ──
-  const signInWithFacebook = useCallback(async () => {
-    console.log('[AUTH] signInWithFacebook invoked');
-    const fbRedirectUri = 'https://midpoint-production-749a.up.railway.app/api/auth/facebook/callback';
-    console.log('[AUTH] Facebook App ID:', FACEBOOK_APP_ID);
-    console.log('[AUTH] Facebook redirectUri:', fbRedirectUri);
-
-    const state = Math.random().toString(36).substring(7);
-    const authUrl =
-      `https://www.facebook.com/v18.0/dialog/oauth` +
-      `?client_id=${FACEBOOK_APP_ID}` +
-      `&redirect_uri=${encodeURIComponent(fbRedirectUri)}` +
-      `&response_type=code` +
-      `&scope=public_profile,email` +
-      `&state=${state}`;
-
-    console.log('[AUTH] Facebook authUrl:', authUrl);
-
-    // Server redirects to midpoint://facebook-auth?code=... which is caught here
-    const result = await WebBrowser.openAuthSessionAsync(authUrl, 'midpoint://facebook-auth');
-    console.log('[AUTH] Facebook result:', JSON.stringify(result, null, 2));
-
-    if (result.type === 'success' && result.url) {
-      const queryString = result.url.split('?')[1];
-      if (queryString) {
-        const params = new URLSearchParams(queryString);
-        const code = params.get('code');
-        if (code) {
-          console.log('[AUTH] Facebook code received, exchanging for token');
-          const exchangeResult = await apiPost('/auth/facebook/exchange', {
-            code,
-            redirectUri: fbRedirectUri,
-          });
-          await handleLoginResponse('facebook', exchangeResult.accessToken);
-          return;
-        }
-      }
-      throw new Error('Facebook sign-in returned no code');
-    } else if (result.type === 'cancel' || result.type === 'dismiss') {
-      console.log('[AUTH] Facebook sign-in dismissed or cancelled');
-    } else {
-      throw new Error('Facebook sign-in failed');
-    }
-  }, [handleLoginResponse]);
-
   // ── Sign Out ──
   const signOut = useCallback(async () => {
     try {
@@ -294,7 +240,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         isAuthenticated: !!user && !!token,
         signInWithGoogle,
         signInWithApple,
-        signInWithFacebook,
         signOut,
         token,
       }}

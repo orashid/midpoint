@@ -15,7 +15,7 @@ import { spacing, borderRadius } from '../theme/spacing';
 import { useAuth } from '../context/AuthContext';
 
 export function SignInScreen() {
-  const { signInWithGoogle, signInWithApple, signInWithFacebook } = useAuth();
+  const { signInWithGoogle, signInWithApple } = useAuth();
   const [loading, setLoading] = useState<string | null>(null);
 
   const handleSignIn = async (provider: string, signInFn: () => Promise<void>) => {
@@ -76,21 +76,6 @@ export function SignInScreen() {
               )}
             </TouchableOpacity>
           )}
-
-          <TouchableOpacity
-            style={[styles.btn, styles.facebookBtn]}
-            onPress={() => handleSignIn('facebook', signInWithFacebook)}
-            disabled={loading !== null}
-          >
-            {loading === 'facebook' ? (
-              <ActivityIndicator size="small" color="#fff" />
-            ) : (
-              <>
-                <Ionicons name="logo-facebook" size={20} color="#fff" />
-                <Text style={styles.btnText}>Continue with Facebook</Text>
-              </>
-            )}
-          </TouchableOpacity>
 
         </View>
 
@@ -157,9 +142,6 @@ const styles = StyleSheet.create({
   },
   appleBtn: {
     backgroundColor: '#000',
-  },
-  facebookBtn: {
-    backgroundColor: '#1877F2',
   },
   terms: {
     fontSize: 12,

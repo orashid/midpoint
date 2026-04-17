@@ -1,6 +1,5 @@
 import { Router } from 'express';
 import { SignJWT } from 'jose';
-import axios from 'axios';
 import { config } from '../config';
 import { query } from '../db';
 import { verifyProviderToken } from '../services/auth-providers';
@@ -8,7 +7,7 @@ import { requireAuth } from '../middleware/auth';
 
 export const authRouter = Router();
 
-const VALID_PROVIDERS = ['google', 'apple', 'facebook'];
+const VALID_PROVIDERS = ['google', 'apple'];
 const TOKEN_EXPIRY = '30d';
 
 async function issueToken(userId: string, email: string): Promise<string> {
@@ -99,47 +98,6 @@ authRouter.get('/auth/me', requireAuth, async (req, res, next) => {
     });
   } catch (err) {
     next(err);
-  }
-});
-
-// GET /api/auth/facebook/callback — redirects to app's custom scheme with the code
-authRouter.get('/auth/facebook/callback', (req, res) => {
-  const { code, error } = req.query;
-  if (error) {
-    return res.redirect(`midpoint://facebook-auth?error=${encodeURIComponent(String(error))}`);
-  }
-  if (!code) {
-    return res.status(400).send('Missing authorization code');
-  }
-  res.redirect(`midpoint://facebook-auth?code=${encodeURIComponent(String(code))}`);
-});
-
-// POST /api/auth/facebook/exchange — exchanges code for access token
-authRouter.post('/auth/facebook/exchange', async (req, res) => {
-  try {
-    const { code, redirectUri } = req.body;
-    if (!code) {
-      return res.status(400).json({ error: 'Missing authorization code' });
-    }
-
-    const tokenResponse = await axios.get('https://graph.facebook.com/v18.0/oauth/access_token', {
-      params: {
-        client_id: config.facebookAppId,
-        client_secret: config.facebookAppSecret,
-        redirect_uri: redirectUri,
-        code,
-      },
-    });
-
-    const accessToken = tokenResponse.data.access_token;
-    if (!accessToken) {
-      return res.status(400).json({ error: 'Failed to obtain access token' });
-    }
-
-    res.json({ accessToken });
-  } catch (err: any) {
-    console.error('[auth] Facebook exchange error:', err.response?.data || err.message);
-    res.status(500).json({ error: 'Facebook token exchange failed' });
   }
 });
 
