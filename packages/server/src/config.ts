@@ -19,6 +19,7 @@ export const config = {
   googleAndroidClientId: process.env.GOOGLE_ANDROID_CLIENT_ID || '',
   appleClientId: process.env.APPLE_CLIENT_ID || '',           // e.g. "com.yourapp.midpoint"
   facebookAppId: process.env.FACEBOOK_APP_ID || '',
+  facebookAppSecret: process.env.FACEBOOK_APP_SECRET || '',
 };
 
 // All acceptable Google audiences (web, iOS, Android) — filtered for non-empty.

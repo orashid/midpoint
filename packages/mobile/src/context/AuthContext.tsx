@@ -244,7 +244,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       `https://www.facebook.com/v18.0/dialog/oauth` +
       `?client_id=${FACEBOOK_APP_ID}` +
       `&redirect_uri=${encodeURIComponent(fbRedirectUri)}` +
-      `&response_type=token` +
+      `&response_type=code` +
       `&scope=public_profile,email` +
       `&state=${state}`;
 

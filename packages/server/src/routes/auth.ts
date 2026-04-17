@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import { SignJWT } from 'jose';
+import axios from 'axios';
 import { config } from '../config';
 import { query } from '../db';
 import { verifyProviderToken } from '../services/auth-providers';
@@ -101,20 +102,36 @@ authRouter.get('/auth/me', requireAuth, async (req, res, next) => {
   }
 });
 
-// GET /api/auth/facebook/callback — redirects Facebook OAuth back to the mobile app
-authRouter.get('/auth/facebook/callback', (req, res) => {
-  // Facebook sends the access_token in the URL fragment (#access_token=...),
-  // which the browser never sends to the server. So we serve a small HTML page
-  // that reads the fragment and redirects to the app's custom scheme.
-  res.send(`<!DOCTYPE html>
-<html><head><title>Redirecting...</title></head>
-<body>
-<script>
-  const fragment = window.location.hash.substring(1);
-  window.location.href = 'midpoint://facebook-auth?' + fragment;
-</script>
-<p>Redirecting to Midpoint...</p>
-</body></html>`);
+// GET /api/auth/facebook/callback — exchanges code for token, then redirects to app
+authRouter.get('/auth/facebook/callback', async (req, res) => {
+  try {
+    const { code } = req.query;
+    if (!code) {
+      return res.status(400).send('Missing authorization code');
+    }
+
+    // Exchange the code for an access token
+    const redirectUri = `https://midpoint-production-749a.up.railway.app/api/auth/facebook/callback`;
+    const tokenResponse = await axios.get('https://graph.facebook.com/v18.0/oauth/access_token', {
+      params: {
+        client_id: config.facebookAppId,
+        client_secret: config.facebookAppSecret,
+        redirect_uri: redirectUri,
+        code,
+      },
+    });
+
+    const accessToken = tokenResponse.data.access_token;
+    if (!accessToken) {
+      return res.status(400).send('Failed to obtain access token');
+    }
+
+    // Redirect back to the mobile app with the access token
+    res.redirect(`midpoint://facebook-auth?access_token=${encodeURIComponent(accessToken)}`);
+  } catch (err: any) {
+    console.error('[auth] Facebook callback error:', err.response?.data || err.message);
+    res.status(500).send('Facebook authentication failed');
+  }
 });
 
 // POST /api/auth/logout (client-side token deletion; server no-op for stateless JWT)
