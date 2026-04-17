@@ -102,9 +102,16 @@ authRouter.get('/auth/me', requireAuth, async (req, res, next) => {
   }
 });
 
-// GET /api/auth/facebook/callback — landing page; mobile catches this URL via openAuthSessionAsync
-authRouter.get('/auth/facebook/callback', (_req, res) => {
-  res.send('<!DOCTYPE html><html><body><p>Authentication complete. You can close this window.</p></body></html>');
+// GET /api/auth/facebook/callback — redirects to app's custom scheme with the code
+authRouter.get('/auth/facebook/callback', (req, res) => {
+  const { code, error } = req.query;
+  if (error) {
+    return res.redirect(`midpoint://facebook-auth?error=${encodeURIComponent(String(error))}`);
+  }
+  if (!code) {
+    return res.status(400).send('Missing authorization code');
+  }
+  res.redirect(`midpoint://facebook-auth?code=${encodeURIComponent(String(code))}`);
 });
 
 // POST /api/auth/facebook/exchange — exchanges code for access token

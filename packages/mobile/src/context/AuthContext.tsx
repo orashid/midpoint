@@ -142,11 +142,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const redirectUri = AuthSession.makeRedirectUri({ scheme: 'midpoint' });
 
-  // Complete any pending Google auth sessions (must be called before promptAsync)
-  useEffect(() => {
-    WebBrowser.maybeCompleteAuthSession();
-  }, []);
-
   // ── Google Sign-In ──
   const signInWithGoogle = useCallback(async () => {
     console.log('[AUTH] signInWithGoogle invoked');
@@ -248,9 +243,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     console.log('[AUTH] Facebook authUrl:', authUrl);
 
-    // Use the server callback URL as the returnUrl — CustomTab closes as soon
-    // as Facebook redirects back to it, giving us the auth code.
-    const result = await WebBrowser.openAuthSessionAsync(authUrl, fbRedirectUri);
+    // Server redirects to midpoint://facebook-auth?code=... which is caught here
+    const result = await WebBrowser.openAuthSessionAsync(authUrl, 'midpoint://facebook-auth');
     console.log('[AUTH] Facebook result:', JSON.stringify(result, null, 2));
 
     if (result.type === 'success' && result.url) {
