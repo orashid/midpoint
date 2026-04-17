@@ -102,16 +102,19 @@ authRouter.get('/auth/me', requireAuth, async (req, res, next) => {
   }
 });
 
-// GET /api/auth/facebook/callback — exchanges code for token, then redirects to app
-authRouter.get('/auth/facebook/callback', async (req, res) => {
+// GET /api/auth/facebook/callback — landing page; mobile catches this URL via openAuthSessionAsync
+authRouter.get('/auth/facebook/callback', (_req, res) => {
+  res.send('<!DOCTYPE html><html><body><p>Authentication complete. You can close this window.</p></body></html>');
+});
+
+// POST /api/auth/facebook/exchange — exchanges code for access token
+authRouter.post('/auth/facebook/exchange', async (req, res) => {
   try {
-    const { code } = req.query;
+    const { code, redirectUri } = req.body;
     if (!code) {
-      return res.status(400).send('Missing authorization code');
+      return res.status(400).json({ error: 'Missing authorization code' });
     }
 
-    // Exchange the code for an access token
-    const redirectUri = `https://midpoint-production-749a.up.railway.app/api/auth/facebook/callback`;
     const tokenResponse = await axios.get('https://graph.facebook.com/v18.0/oauth/access_token', {
       params: {
         client_id: config.facebookAppId,
@@ -123,14 +126,13 @@ authRouter.get('/auth/facebook/callback', async (req, res) => {
 
     const accessToken = tokenResponse.data.access_token;
     if (!accessToken) {
-      return res.status(400).send('Failed to obtain access token');
+      return res.status(400).json({ error: 'Failed to obtain access token' });
     }
 
-    // Redirect back to the mobile app with the access token
-    res.redirect(`midpoint://facebook-auth?access_token=${encodeURIComponent(accessToken)}`);
+    res.json({ accessToken });
   } catch (err: any) {
-    console.error('[auth] Facebook callback error:', err.response?.data || err.message);
-    res.status(500).send('Facebook authentication failed');
+    console.error('[auth] Facebook exchange error:', err.response?.data || err.message);
+    res.status(500).json({ error: 'Facebook token exchange failed' });
   }
 });
 

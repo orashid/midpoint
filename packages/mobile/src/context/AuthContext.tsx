@@ -4,10 +4,11 @@ import * as Google from 'expo-auth-session/providers/google';
 import * as WebBrowser from 'expo-web-browser';
 import * as AppleAuthentication from 'expo-apple-authentication';
 import * as SecureStore from 'expo-secure-store';
-import { Platform } from 'react-native';
+import { Platform, Linking } from 'react-native';
 import { apiPost, apiGet, setAuthToken, clearAuthToken } from '../api/client';
 
-WebBrowser.maybeCompleteAuthSession();
+// Note: maybeCompleteAuthSession is called inside AuthProvider after Google
+// auth completes, not at module level, to avoid interfering with Facebook auth.
 
 const FACEBOOK_DISCOVERY = {
   authorizationEndpoint: 'https://www.facebook.com/v18.0/dialog/oauth',
@@ -77,13 +78,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     scopes: ['openid', 'profile', 'email'],
   });
 
-  // Debug: log redirect URI so we can see what Google is being asked to redirect to
-  useEffect(() => {
-    if (googleRequest) {
-      console.log('[AUTH] Google redirectUri =', googleRequest.redirectUri);
-      console.log('[AUTH] Google clientId =', googleRequest.clientId);
-    }
-  }, [googleRequest]);
+  // (Google debug logging removed — auth is working)
 
   // Restore session on app start
   useEffect(() => {
@@ -146,6 +141,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const redirectUri = AuthSession.makeRedirectUri({ scheme: 'midpoint' });
+
+  // Complete any pending Google auth sessions (must be called before promptAsync)
+  useEffect(() => {
+    WebBrowser.maybeCompleteAuthSession();
+  }, []);
 
   // ── Google Sign-In ──
   const signInWithGoogle = useCallback(async () => {
@@ -233,8 +233,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   // ── Facebook Sign-In ──
   const signInWithFacebook = useCallback(async () => {
     console.log('[AUTH] signInWithFacebook invoked');
-    // Facebook requires HTTPS redirect — use our server as intermediary,
-    // which then redirects to midpoint:// custom scheme
     const fbRedirectUri = 'https://midpoint-production-749a.up.railway.app/api/auth/facebook/callback';
     console.log('[AUTH] Facebook App ID:', FACEBOOK_APP_ID);
     console.log('[AUTH] Facebook redirectUri:', fbRedirectUri);
@@ -249,23 +247,28 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       `&state=${state}`;
 
     console.log('[AUTH] Facebook authUrl:', authUrl);
-    // Listen for midpoint://facebook-auth?access_token=... redirect
-    const result = await WebBrowser.openAuthSessionAsync(authUrl, 'midpoint://facebook-auth');
+
+    // Use the server callback URL as the returnUrl — CustomTab closes as soon
+    // as Facebook redirects back to it, giving us the auth code.
+    const result = await WebBrowser.openAuthSessionAsync(authUrl, fbRedirectUri);
     console.log('[AUTH] Facebook result:', JSON.stringify(result, null, 2));
 
     if (result.type === 'success' && result.url) {
-      // Parse the access_token from the URL query params
-      const url = result.url;
-      const queryString = url.split('?')[1];
+      const queryString = result.url.split('?')[1];
       if (queryString) {
         const params = new URLSearchParams(queryString);
-        const accessToken = params.get('access_token');
-        if (accessToken) {
-          await handleLoginResponse('facebook', accessToken);
+        const code = params.get('code');
+        if (code) {
+          console.log('[AUTH] Facebook code received, exchanging for token');
+          const exchangeResult = await apiPost('/auth/facebook/exchange', {
+            code,
+            redirectUri: fbRedirectUri,
+          });
+          await handleLoginResponse('facebook', exchangeResult.accessToken);
           return;
         }
       }
-      throw new Error('Facebook sign-in returned no access token');
+      throw new Error('Facebook sign-in returned no code');
     } else if (result.type === 'cancel' || result.type === 'dismiss') {
       console.log('[AUTH] Facebook sign-in dismissed or cancelled');
     } else {
