@@ -32,7 +32,9 @@ export function useSearch() {
         }
         return results;
       } catch (err: any) {
-        const message = err.response?.data?.error || err.message || 'Something went wrong';
+        // err is an ApiError (normalized in api/client.ts interceptor).
+        // err.userMessage is always safe to show to the user.
+        const message = err.userMessage || err.message || 'Something went wrong';
         setState({ loading: false, results: null, error: message });
         return null;
       }

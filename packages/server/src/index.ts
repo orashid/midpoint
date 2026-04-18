@@ -2,8 +2,9 @@ import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import { config } from './config';
-import { apiLimiter, authLimiter } from './middleware/rate-limiter';
+import { apiLimiter, authLimiter, mapsLimiter, searchLimiter } from './middleware/rate-limiter';
 import { errorHandler } from './middleware/error-handler';
+import { requireAuth } from './middleware/auth';
 import { autocompleteRouter } from './routes/autocomplete';
 import { geocodeRouter } from './routes/geocode';
 import { searchRouter } from './routes/search';
@@ -39,16 +40,27 @@ app.get('/api/health', (_req, res) => {
 // Public privacy policy (served at root, not under /api)
 app.use('/', privacyRouter);
 
-// Public routes (no auth required) — Google Maps proxies
+// Auth routes (stricter rate limiting: 5 req/min per IP)
+// Declared before the maps proxies so /api/auth/login is not subject to
+// the per-IP maps limiter.
+app.use('/api/auth', authLimiter);
+app.use('/api', authRouter);
+
+// Google Maps proxy routes — per-IP rate limit because they hit paid APIs.
+// Autocomplete / geocode / places-search / photo remain unauthenticated so
+// the onboarding / sign-in flow can use them before login.
+app.use('/api/autocomplete', mapsLimiter);
+app.use('/api/geocode', mapsLimiter);
+app.use('/api/places-search', mapsLimiter);
+app.use('/api/photo', mapsLimiter);
 app.use('/api', autocompleteRouter);
 app.use('/api', geocodeRouter);
-app.use('/api', searchRouter);
 app.use('/api', placesSearchRouter);
 app.use('/api', photoRouter);
 
-// Auth routes (stricter rate limiting: 5 req/min per IP)
-app.use('/api/auth', authLimiter);
-app.use('/api', authRouter);
+// /api/search requires auth AND has per-user daily cap (expensive endpoint).
+app.use('/api/search', requireAuth, searchLimiter);
+app.use('/api', searchRouter);
 
 // Authenticated user data routes
 app.use('/api', spotsRouter);

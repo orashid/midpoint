@@ -10,6 +10,7 @@ import { OurSpotsScreen } from './src/screens/OurSpotsScreen';
 import { SignInScreen } from './src/screens/SignInScreen';
 import { AuthProvider, useAuth } from './src/context/AuthContext';
 import { DataMigration } from './src/components/DataMigration';
+import { AppErrorBoundary } from './src/components/AppErrorBoundary';
 import { colors } from './src/theme/colors';
 
 const Tab = createBottomTabNavigator();
@@ -82,9 +83,11 @@ export default function App() {
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <SafeAreaProvider>
-        <AuthProvider>
-          <AppContent />
-        </AuthProvider>
+        <AppErrorBoundary>
+          <AuthProvider>
+            <AppContent />
+          </AuthProvider>
+        </AppErrorBoundary>
       </SafeAreaProvider>
     </GestureHandlerRootView>
   );

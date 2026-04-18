@@ -5,7 +5,7 @@ import * as WebBrowser from 'expo-web-browser';
 import * as AppleAuthentication from 'expo-apple-authentication';
 import * as SecureStore from 'expo-secure-store';
 import { Platform } from 'react-native';
-import { apiPost, apiGet, setAuthToken, clearAuthToken } from '../api/client';
+import { apiPost, apiGet, setAuthToken, clearAuthToken, setOnAuthExpired } from '../api/client';
 
 WebBrowser.maybeCompleteAuthSession();
 
@@ -218,11 +218,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   // ── Sign Out ──
   const signOut = useCallback(async () => {
-    try {
-      await apiPost('/auth/logout', {});
-    } catch {
-      // Ignore — server logout is best-effort
-    }
+    // Clear local auth state FIRST so the onAuthExpired 401 interceptor
+    // doesn't recurse if /auth/logout returns 401.
     await SecureStore.deleteItemAsync(TOKEN_KEY);
     await SecureStore.deleteItemAsync(USER_KEY);
     clearAuthToken();
@@ -230,7 +227,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setToken(null);
       setUser(null);
     }
+    // Best-effort server-side logout with the old token (still in the request
+    // if we caught it before clearing). Safe to ignore failures.
+    try {
+      await apiPost('/auth/logout', {});
+    } catch {
+      // Ignore — server logout is best-effort
+    }
   }, []);
+
+  // Hook up the axios interceptor's 401 callback. Any authenticated API call
+  // that comes back 401 (expired/invalid token) will trigger a sign-out and
+  // the app will fall back to the SignInScreen automatically.
+  useEffect(() => {
+    setOnAuthExpired(() => {
+      void signOut();
+    });
+    return () => setOnAuthExpired(null);
+  }, [signOut]);
 
   return (
     <AuthContext.Provider
