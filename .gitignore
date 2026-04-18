@@ -5,3 +5,5 @@ dist/
 .expo/
 packages/mobile/ios/
 packages/mobile/android/
+.DS_Store
+**/.DS_Store
