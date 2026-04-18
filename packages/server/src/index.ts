@@ -15,6 +15,7 @@ import { peopleRouter } from './routes/people';
 import { searchesRouter } from './routes/searches';
 import { preferencesRouter } from './routes/preferences';
 import { migrateRouter } from './routes/migrate';
+import { privacyRouter } from './routes/privacy';
 import { runMigrations } from './db/migrate';
 
 const app = express();
@@ -34,6 +35,9 @@ app.use('/api', apiLimiter);
 app.get('/api/health', (_req, res) => {
   res.json({ status: 'ok' });
 });
+
+// Public privacy policy (served at root, not under /api)
+app.use('/', privacyRouter);
 
 // Public routes (no auth required) — Google Maps proxies
 app.use('/api', autocompleteRouter);
