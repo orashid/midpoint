@@ -12,7 +12,38 @@ interface Props {
   participants: ParticipantEntry[];
 }
 
-export function MapView({ midpoint, restaurants, participants }: Props) {
+// Error boundary so a map init failure (e.g., missing API key) doesn't
+// take down the whole screen.
+class MapErrorBoundary extends React.Component<
+  { children: React.ReactNode },
+  { hasError: boolean }
+> {
+  constructor(props: { children: React.ReactNode }) {
+    super(props);
+    this.state = { hasError: false };
+  }
+  static getDerivedStateFromError() {
+    return { hasError: true };
+  }
+  componentDidCatch(error: Error) {
+    console.warn('[MapView] render error:', error.message);
+  }
+  render() {
+    if (this.state.hasError) {
+      return (
+        <View style={[styles.container, styles.fallback]}>
+          <Text style={styles.fallbackText}>Map unavailable</Text>
+          <Text style={styles.fallbackSubtext}>
+            Results below are ranked by distance and rating.
+          </Text>
+        </View>
+      );
+    }
+    return this.props.children;
+  }
+}
+
+function MapViewInner({ midpoint, restaurants, participants }: Props) {
   const mapRef = useRef<RNMapView>(null);
 
   useEffect(() => {
@@ -38,6 +69,7 @@ export function MapView({ midpoint, restaurants, participants }: Props) {
     <View style={styles.container}>
       <RNMapView
         ref={mapRef}
+        provider={PROVIDER_GOOGLE}
         style={styles.map}
         initialRegion={{
           latitude: midpoint.lat,
@@ -80,6 +112,14 @@ export function MapView({ midpoint, restaurants, participants }: Props) {
   );
 }
 
+export function MapView(props: Props) {
+  return (
+    <MapErrorBoundary>
+      <MapViewInner {...props} />
+    </MapErrorBoundary>
+  );
+}
+
 const styles = StyleSheet.create({
   container: {
     borderRadius: borderRadius.lg,
@@ -94,5 +134,22 @@ const styles = StyleSheet.create({
   },
   map: {
     ...StyleSheet.absoluteFillObject,
+  },
+  fallback: {
+    backgroundColor: '#f3f4f6',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: spacing.lg,
+  },
+  fallbackText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: colors.text,
+    marginBottom: 4,
+  },
+  fallbackSubtext: {
+    fontSize: 13,
+    color: colors.textSecondary,
+    textAlign: 'center',
   },
 });

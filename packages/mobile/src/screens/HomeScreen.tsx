@@ -196,7 +196,10 @@ export function HomeScreen() {
           showsVerticalScrollIndicator={false}
           onScroll={(e) => {
             const y = e.nativeEvent.contentOffset.y;
-            setScrolledPastResults(y > resultsY.current - 100);
+            // Only show floating Modify Search once the user has scrolled
+            // well into the results (past the map), so it doesn't overlap
+            // the inline button or appear right after the post-search auto-scroll.
+            setScrolledPastResults(y > resultsY.current + 500);
           }}
           scrollEventThrottle={16}
         >
