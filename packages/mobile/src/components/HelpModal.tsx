@@ -9,8 +9,12 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
+import * as Application from 'expo-application';
 import { colors } from '../theme/colors';
 import { spacing, borderRadius } from '../theme/spacing';
+
+const APP_VERSION = Application.nativeApplicationVersion ?? '—';
+const BUILD_NUMBER = Application.nativeBuildVersion ?? '—';
 
 interface Props {
   visible: boolean;
@@ -162,7 +166,12 @@ export function HelpModal({ visible, onClose }: Props) {
     <Modal visible={visible} animationType="slide" presentationStyle="pageSheet" onRequestClose={onClose}>
       <SafeAreaView style={styles.container} edges={['top']}>
         <View style={styles.header}>
-          <Text style={styles.title}>How to Use Midpoint</Text>
+          <View style={styles.titleWrap}>
+            <Text style={styles.title}>How to Use Midpoint</Text>
+            <Text style={styles.versionLine}>
+              Version {APP_VERSION} · build {BUILD_NUMBER}
+            </Text>
+          </View>
           <TouchableOpacity onPress={onClose} style={styles.closeButton}>
             <Ionicons name="close" size={24} color={colors.text} />
           </TouchableOpacity>
@@ -233,10 +242,18 @@ const styles = StyleSheet.create({
     borderBottomColor: colors.borderLight,
     backgroundColor: colors.surface,
   },
+  titleWrap: {
+    flex: 1,
+  },
   title: {
     fontSize: 20,
     fontWeight: '700',
     color: colors.text,
+  },
+  versionLine: {
+    fontSize: 11,
+    color: colors.textLight,
+    marginTop: 2,
   },
   closeButton: {
     padding: spacing.xs,
