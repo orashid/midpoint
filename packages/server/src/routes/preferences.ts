@@ -11,11 +11,15 @@ preferencesRouter.get('/preferences', requireAuth, async (req, res, next) => {
       'SELECT * FROM user_preferences WHERE user_id = $1',
       [req.user!.id]
     );
+    // Include `cuisineExclusions: []` alongside the new `cuisineInclusions`
+    // so pre-flip sideloaded APKs don't crash when they read the old key
+    // (they'd get undefined otherwise and throw on `.length`).
     if (rows.length === 0) {
       return res.json({
         mealType: 'dinner',
         dietaryRestrictions: [],
         cuisineInclusions: [],
+        cuisineExclusions: [],
         myInfo: null,
       });
     }
@@ -24,6 +28,7 @@ preferencesRouter.get('/preferences', requireAuth, async (req, res, next) => {
       mealType: row.meal_type,
       dietaryRestrictions: row.dietary_restrictions || [],
       cuisineInclusions: row.cuisine_inclusions || [],
+      cuisineExclusions: [],
       myInfo: row.my_name ? {
         name: row.my_name,
         address: row.my_address || '',

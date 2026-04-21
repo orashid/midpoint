@@ -118,6 +118,9 @@ function mapSearchToClient(row: any) {
     mealType: row.meal_type,
     dietaryRestrictions: row.dietary_restrictions || [],
     cuisineInclusions: row.cuisine_inclusions || [],
+    // Back-compat: keep returning the old key as an empty array so sideloaded
+    // pre-flip APKs don't throw on `data.cuisineExclusions.length`.
+    cuisineExclusions: [],
     timestamp: new Date(row.created_at).getTime(),
     pinned: row.pinned,
   };
