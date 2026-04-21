@@ -31,21 +31,22 @@ spotsRouter.get('/spots', requireAuth, async (req, res, next) => {
 // POST /api/spots — save a restaurant
 spotsRouter.post('/spots', requireAuth, async (req, res, next) => {
   try {
-    const { placeId, name, address, lat, lng, cuisineType, familyRating, photoUrl } = req.body;
+    const { placeId, name, address, lat, lng, cuisineType, familyRating, photoUrl, phone } = req.body;
     if (!placeId || !name) {
       return res.status(400).json({ error: 'placeId and name are required' });
     }
 
     const { rows } = await query(
-      `INSERT INTO saved_restaurants (user_id, place_id, name, address, lat, lng, cuisine_type, family_rating, photo_url)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+      `INSERT INTO saved_restaurants (user_id, place_id, name, address, lat, lng, cuisine_type, family_rating, photo_url, phone)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
        ON CONFLICT (user_id, place_id)
        DO UPDATE SET
          cuisine_type = COALESCE(EXCLUDED.cuisine_type, saved_restaurants.cuisine_type),
          family_rating = COALESCE(EXCLUDED.family_rating, saved_restaurants.family_rating),
-         photo_url = COALESCE(EXCLUDED.photo_url, saved_restaurants.photo_url)
+         photo_url = COALESCE(EXCLUDED.photo_url, saved_restaurants.photo_url),
+         phone = COALESCE(EXCLUDED.phone, saved_restaurants.phone)
        RETURNING *`,
-      [req.user!.id, placeId, name, address || '', lat || 0, lng || 0, cuisineType || 'other', familyRating || 3, photoUrl || null]
+      [req.user!.id, placeId, name, address || '', lat || 0, lng || 0, cuisineType || 'other', familyRating || 3, photoUrl || null, phone || null]
     );
 
     res.status(201).json(mapSpotToClient({ ...rows[0], visits: [] }));
@@ -161,6 +162,7 @@ function mapSpotToClient(row: any) {
     cuisineType: row.cuisine_type,
     familyRating: row.family_rating,
     photoUrl: row.photo_url,
+    phone: row.phone || null,
     dateAdded: new Date(row.date_added).getTime(),
     visits: (row.visits || []).map((v: any) => ({
       id: v.id,

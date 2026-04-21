@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, Image, StyleSheet, TouchableOpacity, Linking } from 'react-native';
+import { View, Text, Image, StyleSheet, TouchableOpacity, Linking, Alert } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { colors } from '../theme/colors';
 import { spacing, borderRadius } from '../theme/spacing';
@@ -34,7 +34,18 @@ export function ResultCard({ restaurant, index, isSaved, onToggleSave }: Props) 
     // Opens Google Maps place page with full details (reviews, hours, phone, menu, etc.)
     const query = encodeURIComponent(restaurant.name);
     const url = `https://www.google.com/maps/search/?api=1&query=${query}&query_place_id=${restaurant.placeId}`;
-    Linking.openURL(url);
+    Linking.openURL(url).catch(() => Alert.alert('Unable to open Maps'));
+  };
+
+  const openMaps = () => {
+    openDetails();
+  };
+
+  const callPhone = () => {
+    if (!restaurant.phone) return;
+    // tel: URIs need digits and `+` only; RN's Linking refuses anything else.
+    const sanitized = restaurant.phone.replace(/[^0-9+]/g, '');
+    Linking.openURL(`tel:${sanitized}`).catch(() => Alert.alert('Unable to place call'));
   };
 
   return (
@@ -74,9 +85,29 @@ export function ResultCard({ restaurant, index, isSaved, onToggleSave }: Props) 
         )}
       </View>
 
-      <Text style={styles.address} numberOfLines={1}>
-        {restaurant.address}
-      </Text>
+      <TouchableOpacity
+        style={styles.actionRow}
+        onPress={openMaps}
+        activeOpacity={0.7}
+        hitSlop={{ top: 4, bottom: 4, left: 4, right: 4 }}
+      >
+        <Ionicons name="location-outline" size={16} color={colors.primary} style={styles.actionLead} />
+        <Text style={styles.actionBody} numberOfLines={1}>{restaurant.address}</Text>
+        <Ionicons name="navigate-outline" size={14} color={colors.primary} />
+      </TouchableOpacity>
+
+      {restaurant.phone && (
+        <TouchableOpacity
+          style={styles.actionRow}
+          onPress={callPhone}
+          activeOpacity={0.7}
+          hitSlop={{ top: 4, bottom: 4, left: 4, right: 4 }}
+        >
+          <Ionicons name="call-outline" size={16} color={colors.primary} style={styles.actionLead} />
+          <Text style={[styles.actionBody, styles.actionPhone]} numberOfLines={1}>{restaurant.phone}</Text>
+          <Text style={styles.actionTrailing}>Call</Text>
+        </TouchableOpacity>
+      )}
 
       <View style={styles.distancesContainer}>
         {restaurant.distancesFromParticipants.map((d) => (
@@ -143,6 +174,34 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: colors.textSecondary,
     marginBottom: spacing.sm,
+  },
+  actionRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.background,
+    borderRadius: borderRadius.sm,
+    paddingHorizontal: spacing.sm,
+    paddingVertical: spacing.xs + 2,
+    marginBottom: spacing.xs,
+    gap: spacing.xs,
+  },
+  actionLead: {
+    width: 20,
+    textAlign: 'center',
+  },
+  actionBody: {
+    flex: 1,
+    fontSize: 13,
+    color: colors.text,
+  },
+  actionPhone: {
+    color: colors.primary,
+    fontWeight: '600',
+  },
+  actionTrailing: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: colors.primary,
   },
   distancesContainer: {
     backgroundColor: colors.background,

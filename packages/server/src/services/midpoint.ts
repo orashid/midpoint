@@ -10,7 +10,7 @@ export function calculateMidpoint(participants: Participant[]) {
 
 export async function scoreRestaurants(
   participants: Participant[],
-  candidates: Array<{ placeId: string; name: string; lat: number; lng: number; rating: number; priceLevel: number; photoUrl: string | null; address: string; types: string[] }>
+  candidates: Array<{ placeId: string; name: string; lat: number; lng: number; rating: number; priceLevel: number; photoUrl: string | null; phone: string | null; address: string; types: string[] }>
 ): Promise<Restaurant[]> {
   if (candidates.length === 0) return [];
 

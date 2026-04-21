@@ -1,4 +1,5 @@
 import React, { useState, useCallback, useRef } from 'react';
+import type { TextInput as RNTextInput } from 'react-native';
 import {
   View,
   TextInput,
@@ -40,6 +41,7 @@ export function ParticipantInput({
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [geocoding, setGeocoding] = useState(false);
   const debounceRef = useRef<ReturnType<typeof setTimeout>>(undefined);
+  const nameInputRef = useRef<RNTextInput>(null);
 
   const handleNameChange = useCallback(
     (text: string) => {
@@ -89,12 +91,13 @@ export function ParticipantInput({
       setShowSuggestions(false);
       setSuggestions([]);
       setGeocoding(true);
-      onUpdate(participant.id, { address: suggestion.description });
+      onUpdate(participant.id, { address: suggestion.description, placeId: suggestion.placeId });
 
       try {
         const result = await geocode({ placeId: suggestion.placeId });
         onUpdate(participant.id, {
           address: result.formattedAddress,
+          placeId: suggestion.placeId,
           lat: result.lat,
           lng: result.lng,
         });
@@ -142,8 +145,20 @@ export function ParticipantInput({
         <View style={styles.indexBadge}>
           <Text style={styles.indexText}>{index + 1}</Text>
         </View>
+        <TouchableOpacity
+          style={styles.pencilBtn}
+          onPress={() => nameInputRef.current?.focus()}
+          hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
+        >
+          <Ionicons
+            name="pencil-outline"
+            size={16}
+            color={participant.name ? colors.primary : colors.textLight}
+          />
+        </TouchableOpacity>
         <View style={styles.inputs}>
           <TextInput
+            ref={nameInputRef}
             style={[styles.nameInput, !participant.name && styles.nameDefault]}
             value={participant.name}
             onChangeText={handleNameChange}
@@ -225,6 +240,13 @@ const styles = StyleSheet.create({
     marginRight: spacing.sm,
   },
   indexText: { color: colors.textOnPrimary, fontSize: 13, fontWeight: '700' },
+  pencilBtn: {
+    width: 24,
+    height: 24,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: spacing.xs,
+  },
   inputs: { flex: 1 },
   nameInput: {
     fontSize: 16,

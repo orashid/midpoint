@@ -41,4 +41,15 @@ describe('migrations', () => {
     const mod = await import('../../db/migrate');
     expect(typeof mod.runMigrations).toBe('function');
   });
+
+  it('002 migration is wrapped in a transaction so rename + reset apply atomically', () => {
+    const sql = fs.readFileSync(
+      path.join(migrationsDir, '002_flip_cuisine_and_phone.sql'),
+      'utf-8'
+    );
+    expect(sql).toMatch(/^\s*BEGIN\s*;/);
+    expect(sql.trim().endsWith('COMMIT;')).toBe(true);
+    // IF NOT EXISTS keeps the column add idempotent if a partial prior run left the schema half-applied.
+    expect(sql).toMatch(/ADD COLUMN IF NOT EXISTS phone/);
+  });
 });

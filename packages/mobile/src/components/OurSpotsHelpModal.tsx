@@ -58,9 +58,9 @@ const HELP_SECTIONS: Array<{ heading: string; items: HelpItem[] }> = [
     heading: 'Getting Suggestions',
     items: [
       {
-        icon: 'shuffle',
+        icon: 'sparkles',
         title: 'Pick for Me',
-        body: 'Tap "Pick for me" to get a smart suggestion. The algorithm favors restaurants you haven\'t visited recently and weighs higher-rated spots more. Places visited in the last 14 days are excluded for variety.',
+        body: 'Tap "Pick for me" for a smart suggestion. The algorithm favors higher-rated spots, pulls for places you haven\'t been in a while, and avoids cuisines you\'ve had in your last few visits. Anything visited in the last 7 days is excluded. A one-liner under the pick tells you why it was chosen.',
       },
       {
         icon: 'sync',
@@ -84,8 +84,8 @@ const HELP_SECTIONS: Array<{ heading: string; items: HelpItem[] }> = [
       },
       {
         icon: 'open-outline',
-        title: 'Google Maps',
-        body: 'In the restaurant detail page, tap "View on Google Maps" to see the restaurant\'s location, hours, reviews, and more.',
+        title: 'Call or Get Directions',
+        body: 'On each restaurant\'s detail page, tap the address row to open Maps with directions, or tap the phone row to call. "View on Google Maps" also opens the full listing (hours, reviews, menu).',
       },
       {
         icon: 'trash-outline',

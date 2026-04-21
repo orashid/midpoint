@@ -15,7 +15,7 @@ preferencesRouter.get('/preferences', requireAuth, async (req, res, next) => {
       return res.json({
         mealType: 'dinner',
         dietaryRestrictions: [],
-        cuisineExclusions: [],
+        cuisineInclusions: [],
         myInfo: null,
       });
     }
@@ -23,7 +23,7 @@ preferencesRouter.get('/preferences', requireAuth, async (req, res, next) => {
     res.json({
       mealType: row.meal_type,
       dietaryRestrictions: row.dietary_restrictions || [],
-      cuisineExclusions: row.cuisine_exclusions || [],
+      cuisineInclusions: row.cuisine_inclusions || [],
       myInfo: row.my_name ? {
         name: row.my_name,
         address: row.my_address || '',
@@ -39,17 +39,17 @@ preferencesRouter.get('/preferences', requireAuth, async (req, res, next) => {
 // PUT /api/preferences
 preferencesRouter.put('/preferences', requireAuth, async (req, res, next) => {
   try {
-    const { mealType, dietaryRestrictions, cuisineExclusions } = req.body;
+    const { mealType, dietaryRestrictions, cuisineInclusions } = req.body;
 
     await query(
-      `INSERT INTO user_preferences (user_id, meal_type, dietary_restrictions, cuisine_exclusions)
+      `INSERT INTO user_preferences (user_id, meal_type, dietary_restrictions, cuisine_inclusions)
        VALUES ($1, $2, $3, $4)
        ON CONFLICT (user_id)
        DO UPDATE SET
          meal_type = EXCLUDED.meal_type,
          dietary_restrictions = EXCLUDED.dietary_restrictions,
-         cuisine_exclusions = EXCLUDED.cuisine_exclusions`,
-      [req.user!.id, mealType || 'dinner', dietaryRestrictions || [], cuisineExclusions || []]
+         cuisine_inclusions = EXCLUDED.cuisine_inclusions`,
+      [req.user!.id, mealType || 'dinner', dietaryRestrictions || [], cuisineInclusions || []]
     );
 
     res.json({ success: true });

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { colors } from '../theme/colors';
 import { spacing, borderRadius } from '../theme/spacing';
@@ -19,19 +19,26 @@ const CUISINE_OPTIONS = [
 
 interface Props {
   dietaryRestrictions: string[];
-  cuisineExclusions: string[];
+  cuisineInclusions: string[];
+  brandQuery: string;
   onDietaryChange: (restrictions: string[]) => void;
-  onCuisineChange: (exclusions: string[]) => void;
+  onCuisineChange: (inclusions: string[]) => void;
+  onBrandChange: (brand: string) => void;
 }
 
 export function DietaryFilters({
   dietaryRestrictions,
-  cuisineExclusions,
+  cuisineInclusions,
+  brandQuery,
   onDietaryChange,
   onCuisineChange,
+  onBrandChange,
 }: Props) {
   const [expanded, setExpanded] = useState(false);
-  const hasFilters = dietaryRestrictions.length > 0 || cuisineExclusions.length > 0;
+  const brandActive = brandQuery.trim().length > 0;
+  const filterCount =
+    (brandActive ? 1 : 0) + dietaryRestrictions.length + cuisineInclusions.length;
+  const hasFilters = filterCount > 0;
 
   const toggleDietary = (key: string) => {
     if (dietaryRestrictions.includes(key)) {
@@ -43,10 +50,10 @@ export function DietaryFilters({
 
   const toggleCuisine = (cuisine: string) => {
     const key = cuisine.toLowerCase().replace(/\s+/g, '_');
-    if (cuisineExclusions.includes(key)) {
-      onCuisineChange(cuisineExclusions.filter((c) => c !== key));
+    if (cuisineInclusions.includes(key)) {
+      onCuisineChange(cuisineInclusions.filter((c) => c !== key));
     } else {
-      onCuisineChange([...cuisineExclusions, key]);
+      onCuisineChange([...cuisineInclusions, key]);
     }
   };
 
@@ -58,9 +65,7 @@ export function DietaryFilters({
           <Text style={styles.headerText}>Filters</Text>
           {hasFilters && (
             <View style={styles.filterBadge}>
-              <Text style={styles.filterBadgeText}>
-                {dietaryRestrictions.length + cuisineExclusions.length}
-              </Text>
+              <Text style={styles.filterBadgeText}>{filterCount}</Text>
             </View>
           )}
         </View>
@@ -73,6 +78,29 @@ export function DietaryFilters({
 
       {expanded && (
         <View style={styles.content}>
+          <Text style={styles.subsectionTitle}>Have somewhere in mind?</Text>
+          <View style={[styles.brandField, brandActive && styles.brandFieldActive]}>
+            <Ionicons
+              name="storefront-outline"
+              size={16}
+              color={brandActive ? colors.primary : colors.textSecondary}
+            />
+            <TextInput
+              style={styles.brandInput}
+              value={brandQuery}
+              onChangeText={onBrandChange}
+              placeholder="e.g., Starbucks, Chipotle"
+              placeholderTextColor={colors.textLight}
+              autoCapitalize="words"
+              returnKeyType="done"
+            />
+            {brandActive && (
+              <TouchableOpacity onPress={() => onBrandChange('')}>
+                <Ionicons name="close-circle" size={16} color={colors.textLight} />
+              </TouchableOpacity>
+            )}
+          </View>
+
           <Text style={styles.subsectionTitle}>Dietary Needs</Text>
           <View style={styles.chipRow}>
             {DIETARY_OPTIONS.map(({ key, label, icon }) => {
@@ -80,8 +108,9 @@ export function DietaryFilters({
               return (
                 <TouchableOpacity
                   key={key}
-                  style={[styles.chip, isActive && styles.chipActive]}
-                  onPress={() => toggleDietary(key)}
+                  style={[styles.chip, isActive && styles.chipActive, brandActive && styles.chipDisabled]}
+                  onPress={() => !brandActive && toggleDietary(key)}
+                  disabled={brandActive}
                 >
                   <Ionicons
                     name={icon as any}
@@ -96,29 +125,30 @@ export function DietaryFilters({
             })}
           </View>
 
-          <Text style={styles.subsectionTitle}>Exclude Cuisines</Text>
+          <Text style={styles.subsectionTitle}>Cuisines</Text>
           <View style={styles.chipRow}>
             {CUISINE_OPTIONS.map((cuisine) => {
-              const isActive = cuisineExclusions.includes(cuisine.toLowerCase().replace(/\s+/g, '_'));
+              const isActive = cuisineInclusions.includes(cuisine.toLowerCase().replace(/\s+/g, '_'));
               return (
                 <TouchableOpacity
                   key={cuisine}
-                  style={[styles.chip, isActive && styles.chipExcludeActive]}
-                  onPress={() => toggleCuisine(cuisine)}
+                  style={[styles.chip, isActive && styles.chipActive, brandActive && styles.chipDisabled]}
+                  onPress={() => !brandActive && toggleCuisine(cuisine)}
+                  disabled={brandActive}
                 >
-                  {isActive && <Ionicons name="close" size={12} color={colors.textOnPrimary} />}
-                  <Text
-                    style={[
-                      styles.chipText,
-                      isActive && styles.chipTextActive,
-                    ]}
-                  >
+                  <Text style={[styles.chipText, isActive && styles.chipTextActive]}>
                     {cuisine}
                   </Text>
                 </TouchableOpacity>
               );
             })}
           </View>
+
+          {brandActive && (
+            <Text style={styles.brandHint}>
+              Searching by brand — cuisine filters paused
+            </Text>
+          )}
         </View>
       )}
     </View>
@@ -172,6 +202,33 @@ const styles = StyleSheet.create({
     marginBottom: spacing.sm,
     marginTop: spacing.sm,
   },
+  brandField: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderWidth: 1.5,
+    borderColor: colors.border,
+    borderRadius: borderRadius.md,
+    backgroundColor: colors.background,
+    paddingHorizontal: spacing.sm + 2,
+    paddingVertical: spacing.xs,
+    gap: spacing.sm,
+  },
+  brandFieldActive: {
+    borderColor: colors.primary,
+    backgroundColor: colors.primary + '10',
+  },
+  brandInput: {
+    flex: 1,
+    fontSize: 14,
+    color: colors.text,
+    paddingVertical: spacing.xs,
+  },
+  brandHint: {
+    fontSize: 11,
+    color: colors.textLight,
+    fontStyle: 'italic',
+    marginTop: spacing.xs,
+  },
   chipRow: {
     flexDirection: 'row',
     flexWrap: 'wrap',
@@ -192,9 +249,8 @@ const styles = StyleSheet.create({
     backgroundColor: colors.primary,
     borderColor: colors.primary,
   },
-  chipExcludeActive: {
-    backgroundColor: colors.error,
-    borderColor: colors.error,
+  chipDisabled: {
+    opacity: 0.4,
   },
   chipText: {
     fontSize: 13,

@@ -12,7 +12,8 @@ export const searchRequestSchema = z.object({
   participants: z.array(participantSchema).min(MIN_PARTICIPANTS).max(MAX_PARTICIPANTS),
   mealType: z.enum(['coffee', 'lunch', 'dinner']),
   dietaryRestrictions: z.array(z.string().max(50)).max(10).optional(),
-  cuisineExclusions: z.array(z.string().max(50)).max(20).optional(),
+  cuisineInclusions: z.array(z.string().max(50)).max(20).optional(),
+  brandQuery: z.string().trim().max(100).optional(),
 });
 
 export const geocodeRequestSchema = z.union([

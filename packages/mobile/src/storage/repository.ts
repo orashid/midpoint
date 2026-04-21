@@ -113,8 +113,9 @@ export async function getSavedPeople(): Promise<CachedPerson[]> {
   if (isAuthenticated()) {
     try {
       const people = await api.fetchPeople();
-      await cacheWrite('people', people);
-      return people.sort((a: any, b: any) => b.useCount - a.useCount);
+      const deduped = cache.dedupPeople(people);
+      await cacheWrite('people', deduped);
+      return deduped.sort((a: any, b: any) => b.useCount - a.useCount);
     } catch {
       return cache.getSavedPeople();
     }
@@ -135,7 +136,7 @@ export async function savePerson(person: Omit<CachedPerson, 'useCount' | 'lastUs
 }
 
 export async function saveAllParticipants(
-  participants: Array<{ name: string; address: string; lat: number; lng: number }>
+  participants: Array<{ name: string; address: string; placeId?: string; lat: number; lng: number }>
 ) {
   if (isAuthenticated()) {
     try {
@@ -220,7 +221,7 @@ export async function getPreferences(): Promise<UserPreferences | null> {
       const prefs: UserPreferences = {
         mealType: data.mealType as any,
         dietaryRestrictions: data.dietaryRestrictions,
-        cuisineExclusions: data.cuisineExclusions,
+        cuisineInclusions: data.cuisineInclusions,
       };
       await cacheWrite('preferences', prefs);
       return prefs;

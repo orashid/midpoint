@@ -18,7 +18,7 @@ import { colors } from '../theme/colors';
 import { spacing, borderRadius } from '../theme/spacing';
 import { SavedRestaurant } from '../storage/types';
 import { getMyInfo } from '../storage/repository';
-import { useOurSpots } from '../hooks/useOurSpots';
+import { useOurSpots, formatPickReason, PickReason } from '../hooks/useOurSpots';
 import { useDeviceLocation } from '../hooks/useDeviceLocation';
 import { SpotCard } from '../components/SpotCard';
 import { RestaurantDetail } from '../components/RestaurantDetail';
@@ -56,6 +56,7 @@ export function OurSpotsScreen() {
   const searchLng = homeLng ?? deviceLocation?.lng;
   const [sortMode, setSortMode] = useState<SortMode>('recent');
   const [suggestion, setSuggestion] = useState<SavedRestaurant | null>(null);
+  const [pickReason, setPickReason] = useState<PickReason | null>(null);
   const [showWheel, setShowWheel] = useState(false);
   const [wheelItems, setWheelItems] = useState<SavedRestaurant[]>([]);
   const [selectedSpot, setSelectedSpot] = useState<SavedRestaurant | null>(null);
@@ -105,8 +106,16 @@ export function OurSpotsScreen() {
 
   const handlePickForMe = useCallback(() => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    const pick = getSuggestion(searchLat, searchLng);
-    setSuggestion(pick);
+    const result = getSuggestion(searchLat, searchLng);
+    if (!result) {
+      Alert.alert(
+        'No spots to pick from',
+        'Everything nearby has been visited in the last week. Try again in a few days, or use "Spin the wheel" for a random choice.'
+      );
+      return;
+    }
+    setSuggestion(result.spot);
+    setPickReason(result.reason);
     setShowWheel(false);
   }, [getSuggestion, searchLat, searchLng]);
 
@@ -115,11 +124,13 @@ export function OurSpotsScreen() {
     const eligible = getEligibleForWheel(searchLat, searchLng);
     setWheelItems(eligible);
     setSuggestion(null);
+    setPickReason(null);
     setShowWheel(true);
   }, [getEligibleForWheel, searchLat, searchLng]);
 
   const handleWheelResult = useCallback((restaurant: SavedRestaurant) => {
     setSuggestion(restaurant);
+    setPickReason(null); // wheel picks are pure random, no reason to show
     setShowWheel(false);
   }, []);
 
@@ -287,7 +298,7 @@ export function OurSpotsScreen() {
                   style={styles.suggestionBtn}
                   onPress={handlePickForMe}
                 >
-                  <Ionicons name="shuffle" size={18} color={colors.primary} />
+                  <Ionicons name="sparkles" size={18} color={colors.primary} />
                   <Text style={styles.suggestionBtnText}>Pick for me</Text>
                 </TouchableOpacity>
                 <TouchableOpacity
@@ -310,21 +321,29 @@ export function OurSpotsScreen() {
               )}
 
               {suggestion && !showWheel && (
-                <View style={styles.suggestionResult}>
-                  <Ionicons name="trophy" size={20} color={colors.accent} />
-                  <View style={styles.suggestionResultInfo}>
-                    <Text style={styles.suggestionResultName}>{suggestion.name}</Text>
-                    <Text style={styles.suggestionResultAddress} numberOfLines={1}>
-                      {suggestion.address}
-                    </Text>
+                <>
+                  <View style={styles.suggestionResult}>
+                    <Ionicons name="trophy" size={20} color={colors.accent} />
+                    <View style={styles.suggestionResultInfo}>
+                      <Text style={styles.suggestionResultName}>{suggestion.name}</Text>
+                      <Text style={styles.suggestionResultAddress} numberOfLines={1}>
+                        {suggestion.address}
+                      </Text>
+                    </View>
+                    <TouchableOpacity
+                      style={styles.ateHereBtn}
+                      onPress={() => handleLogVisitFromCard(suggestion.placeId)}
+                    >
+                      <Text style={styles.ateHereBtnText}>Log Visit</Text>
+                    </TouchableOpacity>
                   </View>
-                  <TouchableOpacity
-                    style={styles.ateHereBtn}
-                    onPress={() => handleLogVisitFromCard(suggestion.placeId)}
-                  >
-                    <Text style={styles.ateHereBtnText}>Log Visit</Text>
-                  </TouchableOpacity>
-                </View>
+                  {pickReason && (
+                    <View style={styles.pickReasonRow}>
+                      <Ionicons name="sparkles" size={12} color={colors.accent} />
+                      <Text style={styles.pickReasonText}>{formatPickReason(pickReason)}</Text>
+                    </View>
+                  )}
+                </>
               )}
             </LinearGradient>
 
@@ -537,6 +556,21 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '700',
     color: colors.primary,
+  },
+  pickReasonRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: spacing.sm,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.xs,
+    backgroundColor: 'rgba(255,255,255,0.12)',
+    borderRadius: borderRadius.md,
+    gap: 6,
+  },
+  pickReasonText: {
+    fontSize: 12,
+    color: colors.textOnPrimary,
+    flex: 1,
   },
   sortBar: {
     flexDirection: 'row',

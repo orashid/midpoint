@@ -19,21 +19,68 @@ const KEYS = {
 
 // ── Favorite People ──
 
+// Normalize an address for dedup: lowercase, trim, strip trailing country /
+// postal-ish junk that geocoders flip between runs. "123 Main St, San
+// Francisco, CA" and "123 Main St, San Francisco, California, USA" should
+// collapse to the same key.
+function normalizeAddress(addr: string): string {
+  return addr
+    .toLowerCase()
+    .trim()
+    .replace(/\s+/g, ' ')
+    // Strip trailing country suffix.
+    .replace(/,?\s*(usa|united states|u\.s\.a?\.?)\s*$/i, '')
+    // Strip a trailing ZIP (5 or 9 digit) that follows a state abbrev — only
+    // at end-of-string, to avoid eating a street number like "500 Main St".
+    .replace(/,?\s+[a-z]{2}\s+\d{5}(-\d{4})?\s*$/i, '')
+    .replace(/\s*,\s*/g, ', ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function personKey(p: { name: string; address: string; placeId?: string }): string {
+  if (p.placeId) return `pid:${p.placeId}`;
+  return `nm:${p.name.trim().toLowerCase()}|addr:${normalizeAddress(p.address)}`;
+}
+
+// Merge any entries in the list that share a dedup key. Keeps the highest
+// useCount, latest lastUsed, and promotes placeId if any variant has one.
+export function dedupPeople(people: CachedPerson[]): CachedPerson[] {
+  const byKey = new Map<string, CachedPerson>();
+  for (const p of people) {
+    const key = personKey(p);
+    const existing = byKey.get(key);
+    if (!existing) {
+      byKey.set(key, { ...p });
+    } else {
+      existing.useCount = (existing.useCount || 0) + (p.useCount || 0);
+      existing.lastUsed = Math.max(existing.lastUsed || 0, p.lastUsed || 0);
+      if (!existing.placeId && p.placeId) existing.placeId = p.placeId;
+    }
+  }
+  return [...byKey.values()];
+}
+
 export async function getSavedPeople(): Promise<CachedPerson[]> {
   const raw = await AsyncStorage.getItem(KEYS.people);
   if (!raw) return [];
   const people: CachedPerson[] = safeParse(raw, []);
-  return people.sort((a, b) => b.useCount - a.useCount);
+  const merged = dedupPeople(people);
+  if (merged.length !== people.length) {
+    // Persist the cleaned-up list so legacy duplicates collapse on next read.
+    await AsyncStorage.setItem(KEYS.people, JSON.stringify(merged));
+  }
+  return merged.sort((a, b) => b.useCount - a.useCount);
 }
 
 export async function savePerson(person: Omit<CachedPerson, 'useCount' | 'lastUsed'>) {
   const people = await getSavedPeople();
-  const existing = people.find(
-    (p) => p.name.toLowerCase() === person.name.toLowerCase() && p.address === person.address
-  );
+  const key = personKey(person);
+  const existing = people.find((p) => personKey(p) === key);
   if (existing) {
     existing.useCount++;
     existing.lastUsed = Date.now();
+    if (!existing.placeId && person.placeId) existing.placeId = person.placeId;
   } else {
     people.push({ ...person, useCount: 1, lastUsed: Date.now() });
   }
@@ -41,7 +88,7 @@ export async function savePerson(person: Omit<CachedPerson, 'useCount' | 'lastUs
 }
 
 export async function saveAllParticipants(
-  participants: Array<{ name: string; address: string; lat: number; lng: number }>
+  participants: Array<{ name: string; address: string; placeId?: string; lat: number; lng: number }>
 ) {
   for (const p of participants) {
     await savePerson(p);
@@ -81,7 +128,8 @@ export async function saveRecentSearch(search: Omit<RecentSearch, 'id' | 'timest
     const existing = searches[existingIndex];
     existing.mealType = search.mealType;
     existing.dietaryRestrictions = search.dietaryRestrictions;
-    existing.cuisineExclusions = search.cuisineExclusions;
+    existing.cuisineInclusions = search.cuisineInclusions;
+    existing.brandQuery = search.brandQuery;
     existing.participants = search.participants;
     existing.timestamp = Date.now();
     // Move to front
@@ -133,9 +181,8 @@ export async function deleteRecentSearch(id: string) {
 
 export async function deleteSavedPerson(name: string, address: string) {
   const people = await getSavedPeople();
-  const filtered = people.filter(
-    (p) => !(p.name.toLowerCase() === name.toLowerCase() && p.address === address)
-  );
+  const targetKey = personKey({ name, address });
+  const filtered = people.filter((p) => personKey(p) !== targetKey);
   await AsyncStorage.setItem(KEYS.people, JSON.stringify(filtered));
 }
 
@@ -179,6 +226,7 @@ export async function saveSpot(
     existing.familyRating = spot.familyRating;
     existing.cuisineType = spot.cuisineType;
     if (spot.photoUrl) existing.photoUrl = spot.photoUrl;
+    if (spot.phone) existing.phone = spot.phone;
   } else {
     spots.push({ ...spot, visits: [], dateAdded: Date.now() });
   }

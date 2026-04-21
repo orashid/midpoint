@@ -12,7 +12,37 @@ import {
 import { haversineDistance } from '../utils/geo';
 
 const MAX_DISTANCE_KM = 30;
-const RECENT_VISIT_DAYS = 14;
+const RECENT_VISIT_DAYS = 7;
+const CUISINE_WINDOW_VISITS = 3;
+const NEVER_TRIED_BOOST = 3;
+const DAY_MS = 24 * 60 * 60 * 1000;
+
+export interface PickReason {
+  daysSinceLastVisit: number | null;
+  familyRating: number;
+  cuisineMatchesRecent: boolean;
+  neverTried: boolean;
+}
+
+export interface SuggestionResult {
+  spot: SavedRestaurant;
+  reason: PickReason;
+}
+
+function getLastVisit(spot: SavedRestaurant): number {
+  return spot.visits.length > 0 ? Math.max(...spot.visits.map((v) => v.date)) : 0;
+}
+
+// Last N visits across all spots, each tagged with the spot's cuisine.
+function recentCuisines(spots: SavedRestaurant[], n: number): string[] {
+  const all: Array<{ date: number; cuisine: string }> = [];
+  for (const s of spots) {
+    for (const v of s.visits) {
+      all.push({ date: v.date, cuisine: s.cuisineType });
+    }
+  }
+  return all.sort((a, b) => b.date - a.date).slice(0, n).map((v) => v.cuisine);
+}
 
 export function useOurSpots() {
   const [spots, setSpots] = useState<SavedRestaurant[]>([]);
@@ -81,53 +111,77 @@ export function useOurSpots() {
     [spots]
   );
 
+  // "Pick for me" eligibility: close enough, and not visited in last 7 days.
   const getEligible = useCallback(
     (homeLat?: number, homeLng?: number) => {
       const now = Date.now();
-      const cutoff = now - RECENT_VISIT_DAYS * 24 * 60 * 60 * 1000;
-
+      const cutoff = now - RECENT_VISIT_DAYS * DAY_MS;
       return spots.filter((s) => {
-        // Distance filter
         if (homeLat !== undefined && homeLng !== undefined) {
           const dist = haversineDistance(homeLat, homeLng, s.lat, s.lng);
           if (dist > MAX_DISTANCE_KM) return false;
         }
-        // Recency filter — exclude if visited in last 14 days
-        const lastVisit = s.visits.length > 0
-          ? Math.max(...s.visits.map((v) => v.date))
-          : 0;
-        return lastVisit < cutoff;
+        return getLastVisit(s) < cutoff;
       });
     },
     [spots]
   );
 
   const getSuggestion = useCallback(
-    (homeLat?: number, homeLng?: number): SavedRestaurant | null => {
+    (homeLat?: number, homeLng?: number): SuggestionResult | null => {
       const eligible = getEligible(homeLat, homeLng);
       if (eligible.length === 0) return null;
 
       const now = Date.now();
-      const weights = eligible.map((s) => {
-        const lastVisit = s.visits.length > 0
-          ? Math.max(...s.visits.map((v) => v.date))
-          : 0;
-        const daysSince = lastVisit > 0
-          ? (now - lastVisit) / (24 * 60 * 60 * 1000)
-          : 60; // never visited = high bonus
-        const recencyBonus = Math.min(daysSince / 7, 5);
-        return s.familyRating * recencyBonus;
+      const recent = recentCuisines(spots, CUISINE_WINDOW_VISITS);
+      const mostRecent = recent[0];
+
+      const cuisineBonusFor = (cuisine: string) => {
+        if (cuisine === mostRecent) return 0.1;
+        if (recent.slice(1).includes(cuisine)) return 0.4;
+        return 1;
+      };
+
+      const scored = eligible.map((s) => {
+        const lastVisit = getLastVisit(s);
+        const neverTried = lastVisit === 0;
+        const cuisineBonus = cuisineBonusFor(s.cuisineType);
+
+        let score: number;
+        if (neverTried) {
+          // No visit log — use rating + "saved but untried" bump. Still apply
+          // cuisine rotation so we don't push e.g. Italian when the last 3
+          // visits were all Italian even if the candidate is unvisited.
+          score = s.familyRating * NEVER_TRIED_BOOST * cuisineBonus;
+        } else {
+          const daysSince = (now - lastVisit) / DAY_MS;
+          const recencyBonus = Math.max(1, Math.min(daysSince / 7, 5));
+          score = s.familyRating * recencyBonus * cuisineBonus;
+        }
+        return { spot: s, score };
       });
 
-      const totalWeight = weights.reduce((sum, w) => sum + w, 0);
-      let random = Math.random() * totalWeight;
-      for (let i = 0; i < eligible.length; i++) {
-        random -= weights[i];
-        if (random <= 0) return eligible[i];
+      const totalWeight = scored.reduce((sum, x) => sum + x.score, 0);
+      if (totalWeight <= 0) return null;
+
+      let r = Math.random() * totalWeight;
+      let pick = scored[scored.length - 1];
+      for (const x of scored) {
+        r -= x.score;
+        if (r <= 0) { pick = x; break; }
       }
-      return eligible[eligible.length - 1];
+
+      const lastVisit = getLastVisit(pick.spot);
+      const daysSinceLastVisit = lastVisit === 0 ? null : (now - lastVisit) / DAY_MS;
+      const reason: PickReason = {
+        daysSinceLastVisit,
+        familyRating: pick.spot.familyRating,
+        cuisineMatchesRecent: recent.includes(pick.spot.cuisineType),
+        neverTried: lastVisit === 0,
+      };
+      return { spot: pick.spot, reason };
     },
-    [getEligible]
+    [getEligible, spots]
   );
 
   const getEligibleForWheel = useCallback(
@@ -165,4 +219,22 @@ export function useOurSpots() {
     totalVisits,
     refresh,
   };
+}
+
+// Build a human one-line reason from the pick-reason signals.
+export function formatPickReason(r: PickReason): string {
+  const parts: string[] = [];
+  if (r.neverTried) {
+    parts.push("Haven't tried this yet");
+  } else if (r.daysSinceLastVisit !== null) {
+    const d = r.daysSinceLastVisit;
+    if (d < 14) parts.push(`Haven't been in ${Math.round(d)} days`);
+    else if (d < 60) parts.push(`Haven't been in ${Math.round(d / 7)} weeks`);
+    else parts.push(`Haven't been in ${Math.round(d / 30)} months`);
+  }
+  if (r.familyRating >= 4) parts.push(`${r.familyRating}\u2605`);
+  if (!r.cuisineMatchesRecent && !r.neverTried) {
+    parts.push('different from your recent meals');
+  }
+  return parts.join(' \u00b7 ');
 }

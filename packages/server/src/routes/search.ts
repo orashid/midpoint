@@ -13,17 +13,17 @@ searchRouter.post('/search', async (req, res, next) => {
       return;
     }
 
-    const { participants, mealType, cuisineExclusions } = parsed.data;
+    const { participants, mealType, cuisineInclusions, brandQuery } = parsed.data;
     const { centroid, radius } = calculateMidpoint(participants);
 
     let candidates = await findCandidates(
-      centroid.lat, centroid.lng, radius, mealType, cuisineExclusions
+      centroid.lat, centroid.lng, radius, mealType, cuisineInclusions, brandQuery
     );
 
     // If too few results after filtering, try with larger radius
     if (candidates.length < 5) {
       const largerCandidates = await findCandidates(
-        centroid.lat, centroid.lng, Math.min(radius * 2, 25000), mealType, cuisineExclusions
+        centroid.lat, centroid.lng, Math.min(radius * 2, 25000), mealType, cuisineInclusions, brandQuery
       );
       // Merge, dedup by placeId
       const seen = new Set(candidates.map((c: any) => c.placeId));

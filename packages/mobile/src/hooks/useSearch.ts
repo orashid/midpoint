@@ -20,7 +20,8 @@ export function useSearch() {
       participants: Array<{ name: string; lat: number; lng: number; address: string }>;
       mealType: MealType;
       dietaryRestrictions?: string[];
-      cuisineExclusions?: string[];
+      cuisineInclusions?: string[];
+      brandQuery?: string;
     }) => {
       setState({ loading: true, results: null, error: null });
       try {

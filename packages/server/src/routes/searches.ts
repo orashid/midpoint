@@ -23,7 +23,7 @@ searchesRouter.get('/searches', requireAuth, async (req, res, next) => {
 // POST /api/searches — save a search (upsert by participant key)
 searchesRouter.post('/searches', requireAuth, async (req, res, next) => {
   try {
-    const { participants, mealType, dietaryRestrictions, cuisineExclusions } = req.body;
+    const { participants, mealType, dietaryRestrictions, cuisineInclusions } = req.body;
     if (!Array.isArray(participants) || !mealType) {
       return res.status(400).json({ error: 'participants and mealType are required' });
     }
@@ -52,16 +52,16 @@ searchesRouter.post('/searches', requireAuth, async (req, res, next) => {
       // Update existing
       await query(
         `UPDATE recent_searches
-         SET participants = $1, meal_type = $2, dietary_restrictions = $3, cuisine_exclusions = $4, created_at = now()
+         SET participants = $1, meal_type = $2, dietary_restrictions = $3, cuisine_inclusions = $4, created_at = now()
          WHERE id = $5`,
-        [JSON.stringify(participants), mealType, dietaryRestrictions || [], cuisineExclusions || [], match.id]
+        [JSON.stringify(participants), mealType, dietaryRestrictions || [], cuisineInclusions || [], match.id]
       );
     } else {
       // Insert new
       await query(
-        `INSERT INTO recent_searches (user_id, participants, meal_type, dietary_restrictions, cuisine_exclusions)
+        `INSERT INTO recent_searches (user_id, participants, meal_type, dietary_restrictions, cuisine_inclusions)
          VALUES ($1, $2, $3, $4, $5)`,
-        [req.user!.id, JSON.stringify(participants), mealType, dietaryRestrictions || [], cuisineExclusions || []]
+        [req.user!.id, JSON.stringify(participants), mealType, dietaryRestrictions || [], cuisineInclusions || []]
       );
 
       // Keep max 10 (delete oldest unpinned if over limit)
@@ -117,7 +117,7 @@ function mapSearchToClient(row: any) {
     participants: row.participants,
     mealType: row.meal_type,
     dietaryRestrictions: row.dietary_restrictions || [],
-    cuisineExclusions: row.cuisine_exclusions || [],
+    cuisineInclusions: row.cuisine_inclusions || [],
     timestamp: new Date(row.created_at).getTime(),
     pinned: row.pinned,
   };

@@ -7,6 +7,7 @@ export interface ParticipantEntry {
   name: string;
   defaultLabel: string;
   address: string;
+  placeId?: string;
   lat: number | null;
   lng: number | null;
   isValid: boolean;
@@ -18,6 +19,7 @@ function createWithLabel(index: number): ParticipantEntry {
     name: '',
     defaultLabel: DEFAULT_LABELS[index] || `Friend ${index}`,
     address: '',
+    placeId: undefined,
     lat: null,
     lng: null,
     isValid: false,
@@ -61,10 +63,11 @@ export function useParticipants() {
   ).length >= 2;
 
   const setFromCached = useCallback(
-    (id: string, person: { name: string; address: string; lat: number; lng: number }) => {
+    (id: string, person: { name: string; address: string; placeId?: string; lat: number; lng: number }) => {
       updateParticipant(id, {
         name: person.name,
         address: person.address,
+        placeId: person.placeId,
         lat: person.lat,
         lng: person.lng,
         isValid: true,

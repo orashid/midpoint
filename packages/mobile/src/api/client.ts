@@ -184,6 +184,7 @@ export interface Restaurant {
   rating: number;
   priceLevel: number;
   photoUrl: string | null;
+  phone: string | null;
   types: string[];
   distancesFromParticipants: ParticipantDistance[];
 }
@@ -240,7 +241,8 @@ export async function search(request: {
   participants: Array<{ name: string; lat: number; lng: number; address: string }>;
   mealType: 'coffee' | 'lunch' | 'dinner';
   dietaryRestrictions?: string[];
-  cuisineExclusions?: string[];
+  cuisineInclusions?: string[];
+  brandQuery?: string;
 }): Promise<SearchResponse> {
   const { data } = await api.post('/search', request);
   return data;

@@ -11,7 +11,8 @@ export interface SearchRequest {
   participants: Participant[];
   mealType: MealType;
   dietaryRestrictions?: string[];
-  cuisineExclusions?: string[];
+  cuisineInclusions?: string[];
+  brandQuery?: string;
 }
 
 export interface ParticipantDistance {
@@ -30,6 +31,7 @@ export interface Restaurant {
   rating: number;
   priceLevel: number;
   photoUrl: string | null;
+  phone: string | null;
   types: string[];
   distancesFromParticipants: ParticipantDistance[];
 }

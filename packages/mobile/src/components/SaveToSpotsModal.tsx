@@ -44,6 +44,7 @@ interface Props {
     lat: number;
     lng: number;
     photoUrl?: string | null;
+    phone?: string | null;
     types?: string[];
   } | null;
   onSave: (data: {
@@ -55,6 +56,7 @@ interface Props {
     cuisineType: string;
     familyRating: number;
     photoUrl?: string;
+    phone?: string | null;
   }) => void;
   onClose: () => void;
 }
@@ -87,6 +89,7 @@ export function SaveToSpotsModal({ visible, restaurant, onSave, onClose }: Props
       // paths keep working.
       familyRating: 3,
       photoUrl: restaurant.photoUrl || undefined,
+      phone: restaurant.phone ?? null,
     });
     onClose();
   };

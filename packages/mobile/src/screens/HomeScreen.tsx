@@ -64,7 +64,8 @@ export function HomeScreen() {
 
   const [mealType, setMealType] = useState<MealType>('lunch');
   const [dietaryRestrictions, setDietaryRestrictions] = useState<string[]>([]);
-  const [cuisineExclusions, setCuisineExclusions] = useState<string[]>([]);
+  const [cuisineInclusions, setCuisineInclusions] = useState<string[]>([]);
+  const [brandQuery, setBrandQuery] = useState<string>('');
   const [showHelp, setShowHelp] = useState(false);
 
   // Load saved preferences on mount
@@ -73,7 +74,7 @@ export function HomeScreen() {
       if (prefs) {
         setMealType(prefs.mealType);
         setDietaryRestrictions(prefs.dietaryRestrictions);
-        setCuisineExclusions(prefs.cuisineExclusions);
+        setCuisineInclusions(prefs.cuisineInclusions);
       }
     });
     getMyInfo().then((info) => {
@@ -100,7 +101,7 @@ export function HomeScreen() {
         toGeocode.map(async (p) => {
             const displayName = p.name.trim() || p.defaultLabel;
             if (p.lat !== null && p.lng !== null) {
-              return { name: displayName, address: p.address, lat: p.lat, lng: p.lng };
+              return { name: displayName, address: p.address, placeId: p.placeId, lat: p.lat, lng: p.lng };
             }
             try {
               const geo = await geocode({ address: p.address.trim() });
@@ -109,7 +110,7 @@ export function HomeScreen() {
                 lng: geo.lng,
                 address: geo.formattedAddress,
               });
-              return { name: displayName, address: geo.formattedAddress, lat: geo.lat, lng: geo.lng };
+              return { name: displayName, address: geo.formattedAddress, placeId: p.placeId, lat: geo.lat, lng: geo.lng };
             } catch (e: any) {
               errors.push(`${displayName} ("${p.address}"): ${e.message} | code: ${e.code || 'none'}`);
               return null;
@@ -128,11 +129,13 @@ export function HomeScreen() {
         return;
       }
 
+    const trimmedBrand = brandQuery.trim();
     const result = await performSearch({
       participants: validParticipants,
       mealType,
       dietaryRestrictions: dietaryRestrictions.length > 0 ? dietaryRestrictions : undefined,
-      cuisineExclusions: cuisineExclusions.length > 0 ? cuisineExclusions : undefined,
+      cuisineInclusions: cuisineInclusions.length > 0 ? cuisineInclusions : undefined,
+      brandQuery: trimmedBrand.length > 0 ? trimmedBrand : undefined,
     });
 
     if (result) {
@@ -147,9 +150,10 @@ export function HomeScreen() {
         participants: validParticipants,
         mealType,
         dietaryRestrictions,
-        cuisineExclusions,
+        cuisineInclusions,
+        brandQuery: trimmedBrand.length > 0 ? trimmedBrand : undefined,
       });
-      await savePreferences({ mealType, dietaryRestrictions, cuisineExclusions });
+      await savePreferences({ mealType, dietaryRestrictions, cuisineInclusions });
 
       // Save first participant as "me" if not already saved
       const myInfo = await getMyInfo();
@@ -160,14 +164,15 @@ export function HomeScreen() {
     } catch (e: any) {
       Alert.alert('Error', e.message || 'Something went wrong');
     }
-  }, [participants, mealType, dietaryRestrictions, cuisineExclusions, performSearch, saveParticipants, addSearch, updateParticipant, clearResults]);
+  }, [participants, mealType, dietaryRestrictions, cuisineInclusions, brandQuery, performSearch, saveParticipants, addSearch, updateParticipant, clearResults]);
 
   const handleRecentSearch = useCallback(
     (search: typeof searches[0]) => {
       loadAll(search.participants);
       setMealType(search.mealType);
       setDietaryRestrictions(search.dietaryRestrictions);
-      setCuisineExclusions(search.cuisineExclusions);
+      setCuisineInclusions(search.cuisineInclusions);
+      setBrandQuery(search.brandQuery || '');
 
       // Auto-trigger search
       setTimeout(() => {
@@ -175,7 +180,8 @@ export function HomeScreen() {
           participants: search.participants,
           mealType: search.mealType,
           dietaryRestrictions: search.dietaryRestrictions.length > 0 ? search.dietaryRestrictions : undefined,
-          cuisineExclusions: search.cuisineExclusions.length > 0 ? search.cuisineExclusions : undefined,
+          cuisineInclusions: search.cuisineInclusions.length > 0 ? search.cuisineInclusions : undefined,
+          brandQuery: search.brandQuery && search.brandQuery.trim().length > 0 ? search.brandQuery.trim() : undefined,
         });
       }, 100);
     },
@@ -257,9 +263,11 @@ export function HomeScreen() {
           {/* Filters */}
           <DietaryFilters
             dietaryRestrictions={dietaryRestrictions}
-            cuisineExclusions={cuisineExclusions}
+            cuisineInclusions={cuisineInclusions}
+            brandQuery={brandQuery}
             onDietaryChange={setDietaryRestrictions}
-            onCuisineChange={setCuisineExclusions}
+            onCuisineChange={setCuisineInclusions}
+            onBrandChange={setBrandQuery}
           />
 
           {/* Search Button */}
