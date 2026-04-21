@@ -59,7 +59,7 @@ export async function geocode(query: { placeId?: string; address?: string }) {
   };
 }
 
-const FIELD_MASK = 'places.id,places.displayName,places.formattedAddress,places.location,places.rating,places.priceLevel,places.types,places.photos';
+const FIELD_MASK = 'places.id,places.displayName,places.formattedAddress,places.location,places.rating,places.priceLevel,places.types,places.photos,places.internationalPhoneNumber,places.nationalPhoneNumber';
 
 function normalizePlaces(places: any[]) {
   return places
@@ -75,6 +75,7 @@ function normalizePlaces(places: any[]) {
       photos: p.photos?.length
         ? [{ photo_reference: p.photos[0].name }]
         : [],
+      phone: p.nationalPhoneNumber || p.internationalPhoneNumber || null,
     }));
 }
 
@@ -259,13 +260,17 @@ export async function textSearchPlaces(
   query: string,
   lat?: number,
   lng?: number,
-  radius = 30000
+  radius = 30000,
+  includedType?: string
 ) {
   const body: any = {
     textQuery: query,
     maxResultCount: 10,
-    includedType: 'restaurant',
   };
+  // Only restrict the place type if caller asked for one. Brand searches
+  // ("Starbucks") intentionally leave this open so both `cafe` and
+  // `restaurant` primary types match.
+  if (includedType) body.includedType = includedType;
   if (lat !== undefined && lng !== undefined) {
     body.locationBias = {
       circle: { center: { latitude: lat, longitude: lng }, radius },

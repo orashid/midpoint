@@ -3,6 +3,7 @@ export type MealType = 'coffee' | 'lunch' | 'dinner';
 export interface CachedPerson {
   name: string;
   address: string;
+  placeId?: string;
   lat: number;
   lng: number;
   useCount: number;
@@ -11,10 +12,11 @@ export interface CachedPerson {
 
 export interface RecentSearch {
   id: string;
-  participants: Array<{ name: string; address: string; lat: number; lng: number }>;
+  participants: Array<{ name: string; address: string; placeId?: string; lat: number; lng: number }>;
   mealType: MealType;
   dietaryRestrictions: string[];
-  cuisineExclusions: string[];
+  cuisineInclusions: string[];
+  brandQuery?: string;
   timestamp: number;
   pinned: boolean;
 }
@@ -22,7 +24,7 @@ export interface RecentSearch {
 export interface UserPreferences {
   mealType: MealType;
   dietaryRestrictions: string[];
-  cuisineExclusions: string[];
+  cuisineInclusions: string[];
 }
 
 export interface MyInfo {
@@ -40,9 +42,10 @@ export interface SavedRestaurant {
   lng: number;
   cuisineType: string;
   familyRating: number;
-  visits: Array<{ date: number }>;
+  visits: Array<{ date: number; id?: string }>;
   dateAdded: number;
   photoUrl?: string;
+  phone?: string | null;
 }
 
 export const CUISINE_TYPES = [

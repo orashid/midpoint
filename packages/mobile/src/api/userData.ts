@@ -70,7 +70,7 @@ export async function deleteSearch(id: string): Promise<void> {
 
 // ── Preferences ──
 
-export async function fetchPreferences(): Promise<{ mealType: string; dietaryRestrictions: string[]; cuisineExclusions: string[]; myInfo: MyInfo | null }> {
+export async function fetchPreferences(): Promise<{ mealType: string; dietaryRestrictions: string[]; cuisineInclusions: string[]; myInfo: MyInfo | null }> {
   return apiGet('/preferences');
 }
 

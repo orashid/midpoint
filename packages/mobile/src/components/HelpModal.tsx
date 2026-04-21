@@ -40,7 +40,7 @@ const HELP_SECTIONS: Array<{ heading: string; items: HelpItem[] }> = [
       {
         icon: 'filter',
         title: 'Filters',
-        body: 'Tap "Filters" to expand. Select dietary restrictions (vegetarian, vegan, gluten-free, halal, kosher) and exclude cuisines you don\'t want (Chinese, Indian, Mexican, Italian, Japanese, Thai, Korean, Vietnamese, Mediterranean, American, or Fast Food).',
+        body: 'Tap "Filters" to expand. Pick dietary restrictions (vegetarian, vegan, gluten-free, halal, kosher) and choose the cuisines you want (Chinese, Indian, Mexican, Italian, Japanese, Thai, Korean, Vietnamese, Mediterranean, American, or Fast Food). If you have a specific place in mind — Starbucks, Chipotle — type it in the "Have somewhere in mind?" field at the top. Brand search overrides cuisine filters.',
       },
       {
         icon: 'search',
@@ -60,7 +60,7 @@ const HELP_SECTIONS: Array<{ heading: string; items: HelpItem[] }> = [
       {
         icon: 'list',
         title: 'Restaurant Cards',
-        body: 'Each card shows the restaurant name, rating, price level, and drive time from each participant. Results are ranked by fairness — the most equitable option appears first. Tap a card to view full restaurant details (reviews, hours, phone, photos) on Google Maps.',
+        body: 'Each card shows the restaurant name, rating, price level, and drive time from each participant. Results are ranked by fairness — the most equitable option appears first. Tap the address row to open Maps for directions. Tap the phone row to call directly. Tap the card itself to view full details on Google Maps.',
       },
       {
         icon: 'create-outline',
@@ -108,9 +108,9 @@ const HELP_SECTIONS: Array<{ heading: string; items: HelpItem[] }> = [
         body: 'Build a restaurant list two ways: tap the heart icon on any search result to save it, or go to the Our Spots tab and tap the + button to search and add restaurants manually. Each saved spot gets a cuisine type. If you try to add a restaurant that\'s already saved, you\'ll be asked whether to replace the existing entry or keep it.',
       },
       {
-        icon: 'shuffle',
+        icon: 'sparkles',
         title: 'Get a Suggestion',
-        body: 'Tap "Pick for me" on the Our Spots tab to get a smart suggestion. The algorithm favors restaurants you haven\'t visited recently and weighs higher-rated spots more. Restaurants visited in the last 14 days are excluded so you get variety.',
+        body: 'Tap "Pick for me" on the Our Spots tab for a smart suggestion. The algorithm favors higher-rated spots, boosts places you haven\'t visited in a while, and avoids cuisines you\'ve had in your last few visits. Anything visited in the last 7 days is excluded. The card shows a one-line reason so you can see why it picked that spot. "Spin the wheel" is the pure-random alternative.',
       },
       {
         icon: 'sync',

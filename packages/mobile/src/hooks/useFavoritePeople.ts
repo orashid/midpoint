@@ -15,7 +15,7 @@ export function useFavoritePeople() {
   }, [refresh]);
 
   const saveParticipants = useCallback(
-    async (participants: Array<{ name: string; address: string; lat: number; lng: number }>) => {
+    async (participants: Array<{ name: string; address: string; placeId?: string; lat: number; lng: number }>) => {
       await saveAllParticipants(participants);
       await refresh();
     },

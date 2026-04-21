@@ -83,7 +83,13 @@ export function RestaurantDetail({
   const openInMaps = () => {
     const query = encodeURIComponent(restaurant.name);
     const url = `https://www.google.com/maps/search/?api=1&query=${query}&query_place_id=${restaurant.placeId}`;
-    Linking.openURL(url);
+    Linking.openURL(url).catch(() => Alert.alert('Unable to open Maps'));
+  };
+
+  const callPhone = () => {
+    if (!restaurant.phone) return;
+    const sanitized = restaurant.phone.replace(/[^0-9+]/g, '');
+    Linking.openURL(`tel:${sanitized}`).catch(() => Alert.alert('Unable to place call'));
   };
 
   return (
@@ -102,13 +108,26 @@ export function RestaurantDetail({
           )}
 
           <Text style={styles.name}>{restaurant.name}</Text>
-          <Text style={styles.address}>{restaurant.address}</Text>
 
           {distance !== null && (
             <View style={styles.distanceRow}>
               <Ionicons name="navigate-outline" size={16} color={colors.primary} />
               <Text style={styles.distanceText}>{formatDistance(distance)} from home</Text>
             </View>
+          )}
+
+          <TouchableOpacity style={styles.actionRow} onPress={openInMaps} activeOpacity={0.7}>
+            <Ionicons name="location-outline" size={16} color={colors.primary} style={styles.actionLead} />
+            <Text style={styles.actionBody} numberOfLines={2}>{restaurant.address}</Text>
+            <Ionicons name="navigate-outline" size={14} color={colors.primary} />
+          </TouchableOpacity>
+
+          {restaurant.phone && (
+            <TouchableOpacity style={styles.actionRow} onPress={callPhone} activeOpacity={0.7}>
+              <Ionicons name="call-outline" size={16} color={colors.primary} style={styles.actionLead} />
+              <Text style={[styles.actionBody, styles.actionPhone]}>{restaurant.phone}</Text>
+              <Text style={styles.actionTrailing}>Call</Text>
+            </TouchableOpacity>
           )}
 
           <Text style={styles.sectionLabel}>Cuisine Type</Text>
@@ -240,6 +259,22 @@ const styles = StyleSheet.create({
   },
   name: { fontSize: 24, fontWeight: '700', color: colors.text, marginBottom: spacing.xs },
   address: { fontSize: 14, color: colors.textSecondary, marginBottom: spacing.sm },
+  actionRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: colors.surface,
+    borderRadius: borderRadius.md,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    marginBottom: spacing.xs,
+    gap: spacing.sm,
+    borderWidth: 1,
+    borderColor: colors.borderLight,
+  },
+  actionLead: { width: 20, textAlign: 'center' },
+  actionBody: { flex: 1, fontSize: 14, color: colors.text },
+  actionPhone: { color: colors.primary, fontWeight: '600' },
+  actionTrailing: { fontSize: 13, fontWeight: '700', color: colors.primary },
   distanceRow: {
     flexDirection: 'row',
     alignItems: 'center',

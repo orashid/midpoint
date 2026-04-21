@@ -66,13 +66,18 @@ migrateRouter.post('/migrate', requireAuth, async (req, res, next) => {
       }
 
       // Import recent searches
+      // Accept both the new `cuisineInclusions` field and the legacy
+      // `cuisineExclusions` key from older clients that haven't updated yet.
+      // Legacy exclusion values are semantically inverse and can't be safely
+      // translated, so we drop them (stored as empty array).
       if (Array.isArray(searches)) {
         for (const search of searches) {
+          const inclusions = search.cuisineInclusions ?? [];
           await client.query(
-            `INSERT INTO recent_searches (user_id, participants, meal_type, dietary_restrictions, cuisine_exclusions, pinned, created_at)
+            `INSERT INTO recent_searches (user_id, participants, meal_type, dietary_restrictions, cuisine_inclusions, pinned, created_at)
              VALUES ($1, $2, $3, $4, $5, $6, to_timestamp($7 / 1000.0))`,
             [userId, JSON.stringify(search.participants), search.mealType || 'dinner',
-             search.dietaryRestrictions || [], search.cuisineExclusions || [],
+             search.dietaryRestrictions || [], inclusions,
              search.pinned || false, search.timestamp || Date.now()]
           );
         }
@@ -81,25 +86,25 @@ migrateRouter.post('/migrate', requireAuth, async (req, res, next) => {
       // Import preferences and myInfo
       const mealType = preferences?.mealType || 'dinner';
       const dietaryRestrictions = preferences?.dietaryRestrictions || [];
-      const cuisineExclusions = preferences?.cuisineExclusions || [];
+      const cuisineInclusions = preferences?.cuisineInclusions ?? [];
       const myName = myInfo?.name || null;
       const myAddress = myInfo?.address || null;
       const myLat = myInfo?.lat || null;
       const myLng = myInfo?.lng || null;
 
       await client.query(
-        `INSERT INTO user_preferences (user_id, meal_type, dietary_restrictions, cuisine_exclusions, my_name, my_address, my_lat, my_lng)
+        `INSERT INTO user_preferences (user_id, meal_type, dietary_restrictions, cuisine_inclusions, my_name, my_address, my_lat, my_lng)
          VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
          ON CONFLICT (user_id)
          DO UPDATE SET
            meal_type = EXCLUDED.meal_type,
            dietary_restrictions = EXCLUDED.dietary_restrictions,
-           cuisine_exclusions = EXCLUDED.cuisine_exclusions,
+           cuisine_inclusions = EXCLUDED.cuisine_inclusions,
            my_name = COALESCE(EXCLUDED.my_name, user_preferences.my_name),
            my_address = COALESCE(EXCLUDED.my_address, user_preferences.my_address),
            my_lat = COALESCE(EXCLUDED.my_lat, user_preferences.my_lat),
            my_lng = COALESCE(EXCLUDED.my_lng, user_preferences.my_lng)`,
-        [userId, mealType, dietaryRestrictions, cuisineExclusions, myName, myAddress, myLat, myLng]
+        [userId, mealType, dietaryRestrictions, cuisineInclusions, myName, myAddress, myLat, myLng]
       );
     });
 
