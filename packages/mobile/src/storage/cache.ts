@@ -97,15 +97,26 @@ export async function saveAllParticipants(
 
 // ── Recent Searches ──
 
+// Normalize a recent-search entry shape across versions. Older clients wrote
+// `cuisineExclusions`; the new schema uses `cuisineInclusions`. Because the
+// include/exclude semantics are inverse we can't safely translate legacy
+// values, so we drop them and start fresh.
+function normalizeRecentSearch(s: any): RecentSearch {
+  return {
+    ...s,
+    id: s.id ? String(s.id) : String(s.timestamp || Date.now()),
+    dietaryRestrictions: Array.isArray(s.dietaryRestrictions) ? s.dietaryRestrictions : [],
+    cuisineInclusions: Array.isArray(s.cuisineInclusions) ? s.cuisineInclusions : [],
+    brandQuery: s.brandQuery ?? undefined,
+    pinned: !!s.pinned,
+  };
+}
+
 export async function getRecentSearches(): Promise<RecentSearch[]> {
   const raw = await AsyncStorage.getItem(KEYS.searches);
   if (!raw) return [];
-  const searches: RecentSearch[] = safeParse(raw, []);
-  // Ensure every entry has a string id
-  for (const s of searches) {
-    if (!s.id) s.id = String(s.timestamp || Date.now());
-    else s.id = String(s.id);
-  }
+  const parsed: any[] = safeParse(raw, []);
+  const searches = parsed.map(normalizeRecentSearch);
   // Pinned first, then by timestamp
   return searches.sort((a, b) => {
     if (a.pinned !== b.pinned) return a.pinned ? -1 : 1;
@@ -190,7 +201,15 @@ export async function deleteSavedPerson(name: string, address: string) {
 
 export async function getPreferences(): Promise<UserPreferences | null> {
   const raw = await AsyncStorage.getItem(KEYS.preferences);
-  return raw ? safeParse<UserPreferences | null>(raw, null) : null;
+  if (!raw) return null;
+  const parsed: any = safeParse(raw, null);
+  if (!parsed) return null;
+  // Older versions stored `cuisineExclusions` with inverse semantics; drop it.
+  return {
+    mealType: parsed.mealType || 'dinner',
+    dietaryRestrictions: Array.isArray(parsed.dietaryRestrictions) ? parsed.dietaryRestrictions : [],
+    cuisineInclusions: Array.isArray(parsed.cuisineInclusions) ? parsed.cuisineInclusions : [],
+  };
 }
 
 export async function savePreferences(prefs: UserPreferences) {

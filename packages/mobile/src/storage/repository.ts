@@ -166,7 +166,14 @@ export async function deleteSavedPerson(name: string, address: string) {
 export async function getRecentSearches(): Promise<RecentSearch[]> {
   if (isAuthenticated()) {
     try {
-      const searches = await api.fetchSearches();
+      const raw = await api.fetchSearches();
+      // Defensive: tolerate a server still sending the legacy `cuisineExclusions`
+      // key (e.g. mid-deploy) or missing the field entirely.
+      const searches: RecentSearch[] = (raw as any[]).map((s) => ({
+        ...s,
+        dietaryRestrictions: Array.isArray(s.dietaryRestrictions) ? s.dietaryRestrictions : [],
+        cuisineInclusions: Array.isArray(s.cuisineInclusions) ? s.cuisineInclusions : [],
+      }));
       await cacheWrite('searches', searches);
       return searches;
     } catch {
@@ -219,9 +226,9 @@ export async function getPreferences(): Promise<UserPreferences | null> {
     try {
       const data = await api.fetchPreferences();
       const prefs: UserPreferences = {
-        mealType: data.mealType as any,
-        dietaryRestrictions: data.dietaryRestrictions,
-        cuisineInclusions: data.cuisineInclusions,
+        mealType: (data.mealType as any) || 'dinner',
+        dietaryRestrictions: Array.isArray(data.dietaryRestrictions) ? data.dietaryRestrictions : [],
+        cuisineInclusions: Array.isArray(data.cuisineInclusions) ? data.cuisineInclusions : [],
       };
       await cacheWrite('preferences', prefs);
       return prefs;
