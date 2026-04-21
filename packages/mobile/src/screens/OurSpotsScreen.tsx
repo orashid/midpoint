@@ -129,9 +129,15 @@ export function OurSpotsScreen() {
   }, [getEligibleForWheel, searchLat, searchLng]);
 
   const handleWheelResult = useCallback((restaurant: SavedRestaurant) => {
+    // "View Details" on the wheel result opens the full detail modal,
+    // matching the button's label. Also keep the winner in the suggestion
+    // slot so the Our Spots home card still reflects the pick once the
+    // detail modal is dismissed.
     setSuggestion(restaurant);
     setPickReason(null); // wheel picks are pure random, no reason to show
     setShowWheel(false);
+    setSelectedSpot(restaurant);
+    setShowDetail(true);
   }, []);
 
   const handleAddFromSearch = useCallback(
