@@ -75,6 +75,10 @@ export default {
             "Midpoint uses your location to find restaurants near you when searching.",
         },
       ],
+      [
+        "./plugins/with-adi-registration",
+        { snippet: process.env.ADI_REGISTRATION_SNIPPET },
+      ],
     ],
     extra: {
       eas: {
