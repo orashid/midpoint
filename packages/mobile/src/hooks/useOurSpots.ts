@@ -91,8 +91,8 @@ export function useOurSpots() {
   );
 
   const removeVisit = useCallback(
-    async (placeId: string, visitDate: number) => {
-      await removeVisitFromStorage(placeId, visitDate);
+    async (placeId: string, visitDate: number, visitId?: string) => {
+      await removeVisitFromStorage(placeId, visitDate, visitId);
       await refresh();
     },
     [refresh]

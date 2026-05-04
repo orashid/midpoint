@@ -30,7 +30,7 @@ interface Props {
   onUpdateRating: (placeId: string, rating: number) => void;
   onUpdateCuisine: (placeId: string, cuisineType: string) => void;
   onLogVisit: (placeId: string, date?: number) => void;
-  onRemoveVisit: (placeId: string, visitDate: number) => void;
+  onRemoveVisit: (placeId: string, visitDate: number, visitId?: string) => void;
   onRemove: (placeId: string) => void;
 }
 
@@ -212,8 +212,10 @@ export function RestaurantDetail({
                 <Ionicons name="calendar-outline" size={14} color={colors.textSecondary} />
                 <Text style={styles.visitDate}>{formatDate(v.date)}</Text>
                 <TouchableOpacity
+                  accessibilityLabel="Delete visit"
+                  accessibilityRole="button"
                   style={styles.visitDeleteBtn}
-                  onPress={() => onRemoveVisit(restaurant.placeId, v.date)}
+                  onPress={() => onRemoveVisit(restaurant.placeId, v.date, v.id)}
                 >
                   <Ionicons name="close-circle-outline" size={18} color={colors.textLight} />
                 </TouchableOpacity>
