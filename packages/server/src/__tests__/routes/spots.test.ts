@@ -287,6 +287,7 @@ describe('spots routes', () => {
       expect(res.body[0].name).toBe('Pizza Place');
       expect(res.body[0].familyRating).toBe(5);
       expect(res.body[0].visits).toHaveLength(1);
+      expect(res.body[0].visits[0]).toEqual({ id: 1, date: 1705276800000 });
     });
 
     it('should return empty array when no spots exist', async () => {
@@ -296,6 +297,118 @@ describe('spots routes', () => {
 
       expect(res.status).toBe(200);
       expect(res.body).toEqual([]);
+    });
+  });
+
+  describe('POST /api/spots/:placeId/visits', () => {
+    it('should return 404 when the spot does not exist for this user', async () => {
+      mockQuery.mockResolvedValueOnce({ rows: [] }); // spot lookup
+
+      const res = await request(app)
+        .post('/api/spots/ChIJmissing/visits')
+        .send({});
+
+      expect(res.status).toBe(404);
+      expect(res.body.error).toBe('Spot not found');
+    });
+
+    it('should insert a visit with the provided date and return its id+date', async () => {
+      mockQuery
+        .mockResolvedValueOnce({ rows: [{ id: 'spot-1' }] }) // spot lookup
+        .mockResolvedValueOnce({
+          rows: [{ id: 'visit-7', visited_at: '2024-06-01T12:00:00Z' }],
+        });
+
+      const date = new Date('2024-06-01T12:00:00Z').getTime();
+      const res = await request(app)
+        .post('/api/spots/ChIJ123/visits')
+        .send({ date });
+
+      expect(res.status).toBe(201);
+      expect(res.body).toEqual({ id: 'visit-7', date });
+
+      const insertCall = mockQuery.mock.calls[1];
+      expect(insertCall[1][0]).toBe('spot-1');
+      expect(insertCall[1][1]).toBe('test-user-id');
+      expect((insertCall[1][2] as Date).toISOString()).toBe('2024-06-01T12:00:00.000Z');
+    });
+
+    it('should default to "now" when no date is supplied', async () => {
+      const before = Date.now();
+      mockQuery
+        .mockResolvedValueOnce({ rows: [{ id: 'spot-1' }] })
+        .mockResolvedValueOnce({
+          rows: [{ id: 'visit-8', visited_at: new Date().toISOString() }],
+        });
+
+      const res = await request(app)
+        .post('/api/spots/ChIJ123/visits')
+        .send({});
+
+      expect(res.status).toBe(201);
+      const insertedAt = mockQuery.mock.calls[1][1][2] as Date;
+      expect(insertedAt.getTime()).toBeGreaterThanOrEqual(before);
+      expect(insertedAt.getTime()).toBeLessThanOrEqual(Date.now());
+    });
+
+    it('should scope the spot lookup to the authenticated user', async () => {
+      mockQuery
+        .mockResolvedValueOnce({ rows: [{ id: 'spot-1' }] })
+        .mockResolvedValueOnce({
+          rows: [{ id: 'visit-9', visited_at: new Date().toISOString() }],
+        });
+
+      await request(app)
+        .post('/api/spots/ChIJ123/visits')
+        .send({ date: 1705276800000 });
+
+      expect(mockQuery.mock.calls[0][1]).toEqual(['test-user-id', 'ChIJ123']);
+    });
+  });
+
+  describe('DELETE /api/spots/:placeId/visits/:visitId', () => {
+    it('should return 404 when the visit does not exist (or is not owned)', async () => {
+      mockQuery.mockResolvedValueOnce({ rowCount: 0 });
+
+      const res = await request(app).delete(
+        '/api/spots/ChIJ123/visits/visit-missing'
+      );
+
+      expect(res.status).toBe(404);
+      expect(res.body.error).toBe('Visit not found');
+    });
+
+    it('should delete the visit when found', async () => {
+      mockQuery.mockResolvedValueOnce({ rowCount: 1 });
+
+      const res = await request(app).delete('/api/spots/ChIJ123/visits/visit-7');
+
+      expect(res.status).toBe(200);
+      expect(res.body.success).toBe(true);
+    });
+
+    it('should join through saved_restaurants and scope by user_id', async () => {
+      mockQuery.mockResolvedValueOnce({ rowCount: 1 });
+
+      await request(app).delete('/api/spots/ChIJ123/visits/visit-7');
+
+      const [sql, params] = mockQuery.mock.calls[0];
+      expect(sql).toMatch(/saved_restaurants/);
+      expect(sql).toMatch(/sr\.user_id = \$2/);
+      expect(sql).toMatch(/sr\.place_id = \$3/);
+      expect(params).toEqual(['visit-7', 'test-user-id', 'ChIJ123']);
+    });
+
+    it('should not let a user delete another user\'s visit (rowCount=0 → 404)', async () => {
+      // The DELETE statement filters by sr.user_id; a visit owned by a different
+      // user produces rowCount=0, which the route maps to 404.
+      mockQuery.mockResolvedValueOnce({ rowCount: 0 });
+
+      const res = await request(app).delete(
+        '/api/spots/ChIJ123/visits/visit-belonging-to-someone-else'
+      );
+
+      expect(res.status).toBe(404);
     });
   });
 });
